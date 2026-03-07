@@ -1,30 +1,31 @@
-# 👋 Hey, I'm Yumo
+# Hey, I'm Yumo ⚡
 
-**Builder** · **Data & Automation** · **Quantitative Finance**
+**Self-taught developer** building production-grade systems in Python. Former travel consultant who taught himself to code — and shipped a quantitative trading engine to prove it.
 
-I'm a Montreal-based developer building systems at the intersection of code, data, and markets. Currently focused on quantitative trading systems, automation tools, and data-driven projects.
+## 🔨 Projects
 
-## 🔨 What I'm Building
+| Project | Description | Tech |
+|---------|-------------|------|
+| [**Polymarket Autopilot**](https://github.com/yumorepos/polymarket-autopilot) | Algorithmic paper trading engine — 10 quant strategies, backtesting, automated reports | Python, async I/O, SQLite, pytest |
+| [**Montreal Housing Analysis**](https://github.com/yumorepos/montreal-housing-analysis) | Rental market data analysis with statistical modeling & visualizations | Python, pandas, seaborn, matplotlib |
+| [**Portfolio**](https://yumorepos.github.io) | Developer portfolio with resume download | HTML/CSS/JS |
 
-- **[Polymarket Autopilot](https://github.com/yumorepos/polymarket-autopilot)** — Algorithmic paper trading engine for prediction markets. 10 strategies, backtesting engine, automated P&L reports. Python, async I/O, SQLite.
+## 📊 By the Numbers
 
-## 🛠️ Tech Stack
+- **3,600+** lines of production Python
+- **10** quantitative trading strategies
+- **45** automated tests passing
+- **CI/CD** via GitHub Actions
+- **Docker** containerized
 
-`Python` · `JavaScript` · `SQL` · `HTML/CSS` · `Git`
-`Data Analysis` · `Automation` · `Quantitative Finance` · `API Integration`
+## 🛠️ Stack
 
-## 📈 What I'm Into
+`Python` `SQL` `JavaScript` `Bash` · `pandas` `NumPy` `SQLite` · `Git` `Docker` `GitHub Actions` `REST APIs` · `pytest` `mypy` `ruff`
 
-- Prediction markets & quantitative trading strategies
-- Automation that eliminates manual work
-- Building tools that create leverage
-- Data analysis & visualization
+## 📫 Let's Connect
 
-## 📫 Connect
-
-- 🌐 [Portfolio](https://yumorepos.github.io)
-- 💻 [GitHub](https://github.com/yumorepos)
+🌐 [yumorepos.github.io](https://yumorepos.github.io) · 💼 [LinkedIn](https://linkedin.com/in/yumo-xu-1589b7326) · 📄 [Resume](https://yumorepos.github.io/Yumo-Xu-Resume.pdf)
 
 ---
 
-*Currently open to opportunities in data, automation, and software development.*
+*Open to opportunities in software development, data analysis, and automation · Montreal, Canada*
