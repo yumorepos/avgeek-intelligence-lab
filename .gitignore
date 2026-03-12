@@ -1,0 +1,32 @@
+# OS/editor
+.DS_Store
+.vscode/
+.idea/
+
+# Environment
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+
+# Node / Next
+node_modules/
+.next/
+out/
+
+# Data artifacts
+data/raw/*
+data/staging/*
+data/marts/*
+!data/raw/.gitkeep
+!data/staging/.gitkeep
+!data/marts/.gitkeep
+
+# Logs
+*.log
