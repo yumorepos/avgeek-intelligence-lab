@@ -74,9 +74,27 @@ export default function HomePage() {
         <p className="eyebrow">Flight Price Intelligence Lab</p>
         <h1>Route Explorer</h1>
         <p>
-          Evaluate route attractiveness, pricing signals, and reliability in one decision-ready workspace designed for airline and
-          travel analytics conversations.
+          Evaluate route attractiveness, price context, and reliability signals in a transparent analytics workspace for aviation and
+          travel product conversations.
         </p>
+      </section>
+
+      <section className="panel">
+        <h2>How to read this screen</h2>
+        <div className="metrics-grid">
+          <article>
+            <h3>Route score (0–100)</h3>
+            <p className="muted">A heuristic blend of fare attractiveness, reliability, and fare stability. It is directional, not predictive.</p>
+          </article>
+          <article>
+            <h3>Deal signal</h3>
+            <p className="muted">Compares latest observed fare against the route&apos;s own historical baseline (strong_deal to expensive).</p>
+          </article>
+          <article>
+            <h3>Confidence and provenance</h3>
+            <p className="muted">Low confidence or fallback mode means you should treat insights as exploratory due to thin or partial coverage.</p>
+          </article>
+        </div>
       </section>
 
       <AirportSearchPanel
@@ -90,7 +108,9 @@ export default function HomePage() {
       />
 
       {searchError ? <p className="status error">Airport search error: {searchError}</p> : null}
-      {!isSearching && !searchError && !hasSearchResults ? <p className="status">No airports matched your query.</p> : null}
+      {!isSearching && !searchError && !hasSearchResults ? (
+        <p className="status">No airports matched your query. Try a major hub (JFK, LAX, SFO) or a city/airport name.</p>
+      ) : null}
 
       <section className="panel">
         <div className="panel-header">
@@ -98,10 +118,10 @@ export default function HomePage() {
           <p className="muted">Ranked routes with latest score, fare insight, and reliability cues.</p>
         </div>
 
-        {isLoadingRoutes ? <p className="status">Loading routes…</p> : null}
+        {isLoadingRoutes ? <p className="status">Loading routes and score summaries…</p> : null}
         {routesError ? <p className="status error">Route explorer error: {routesError}</p> : null}
         {!isLoadingRoutes && !routesError && routesData && routesData.routes.length === 0 ? (
-          <p className="status">No routes available for this origin yet.</p>
+          <p className="status">No routes available for this origin in the loaded MVP slice yet.</p>
         ) : null}
 
         {routesData ? <MetadataNotice metadata={routesData.metadata} /> : null}

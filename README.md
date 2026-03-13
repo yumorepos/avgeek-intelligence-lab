@@ -1,54 +1,82 @@
 # Flight Price Intelligence Lab
 
-Flight Price Intelligence Lab is a portfolio-first aviation analytics product scaffold focused on turning public aviation datasets into route-level decision support.
+Flight Price Intelligence Lab is a portfolio-grade product prototype that turns public aviation datasets into **route-level decision intelligence**.
 
-## Why this project exists
+It is intentionally built as an honest MVP: strong enough to demonstrate product thinking + analytics engineering, while being explicit about current limits.
 
-This repository is intended to demonstrate:
-- Travel-domain understanding (fares, routes, reliability, airport context)
-- Product-oriented analytics design
-- Full-stack engineering across frontend, backend, and data workflows
+## What this project is
 
-## Target stack
+A full-stack analytics app where users can:
+- Search origin airports
+- Explore destination routes with a composite route score
+- Inspect route-level fare/reliability history
+- Review data provenance, confidence, and methodology caveats
 
-- **Frontend:** Next.js + TypeScript
-- **Backend:** FastAPI (Python)
-- **Data/Analytics:** Python, Pandas, SQL
-- **Database:** PostgreSQL
-- **Charts (planned):** Recharts or Plotly
+## Why it matters
 
-## Planned MVP (2–3 week scope)
+Aviation and travel decisions often mix imperfect operational data, noisy fare signals, and stakeholder pressure for clear recommendations. This project demonstrates how to:
+- Build trustworthy analytics UX under imperfect data conditions
+- Explain scoring logic without pretending model certainty
+- Keep product narrative and technical implementation aligned
 
-- Route search and route detail foundation
-- Historical fare trend view (from curated datasets)
-- Reliability summary (on-time and cancellations)
-- Airport context panel
-- Early explainable route/deal heuristic scoring
+## What makes it different
 
-## Current repository status
+- **Explainable scoring, not black-box theater:** route scoring is deterministic and documented.
+- **Trust-first UX:** provenance, fallback mode, and incomplete coverage are surfaced.
+- **End-to-end delivery:** data pipeline foundation, API contracts, and product UI shipped together.
+- **Portfolio realism:** docs describe what works, what is partial, and what is missing.
 
-The repository now includes a **serious MVP frontend and API foundation**:
-- Monorepo directory layout
-- Next.js Route Explorer and Route Detail experience with reusable components/charts and API integration
-- FastAPI analytics API layer with health, airport, route, and methodology endpoints
-- Implemented MVP batch pipeline foundation in `scripts/` (raw/staging/marts/load)
-- Implemented Postgres analytics schema v1 (`sql/schema.sql`)
-- Initial project documentation skeleton
+## Architecture at a glance
 
-Core analytics marts are implemented, including a first-pass heuristic `route_scores` layer. The backend exposes MVP analytics read endpoints backed by Postgres-oriented queries; production hardening is still intentionally not implemented yet.
+- **Frontend:** Next.js + TypeScript (`frontend/`)
+- **Backend:** FastAPI (`backend/`)
+- **Data pipeline:** Python batch scripts (`scripts/`)
+- **Storage:** PostgreSQL schema v1 (`sql/schema.sql`)
+- **Data lifecycle:** `data/raw` → `data/staging` → `data/marts`
 
-## High-level architecture
+For deeper detail, see `docs/architecture.md`.
 
-- `frontend/` — Next.js app shell and UI foundation
-- `backend/` — FastAPI app shell and API foundation
-- `data/` — raw/staging/marts directories for data lifecycle
-- `scripts/` — MVP batch ingestion, transforms, and Postgres load scripts
-- `sql/` — schema definition (MVP analytics v1)
-- `docs/` — architecture, methodology, roadmap, and data dictionary drafts
+## Data sources (MVP scope)
 
-## Local setup (only for what exists today)
+1. BTS DB1B (fare aggregates)
+2. BTS On-Time Performance (reliability/cancellations)
+3. FAA enplanements (airport context)
 
-### Backend
+No real-time market feed is currently implemented.
+
+## Methodology summary
+
+The product reports two primary route-level signals:
+
+- **Route score (0–100):** heuristic blend of fare attractiveness, reliability, and fare stability.
+- **Deal signal:** relative pricing label (`strong_deal`, `deal`, `neutral`, `expensive`) versus route historical baseline.
+
+These are directional intelligence signals, not price predictions or revenue forecasts.
+
+For details and caveats, see `docs/methodology.md`.
+
+## Current implementation status
+
+### Definitely implemented
+- Route Explorer and Route Detail flows with score + trend views
+- Provenance metadata surfaced in API and UI
+- FastAPI read endpoints for airports, routes, context, and methodology
+- MVP batch pipeline foundation from raw/staging/marts to Postgres load
+
+### Partially implemented
+- Reliability coverage varies by route/month in fallback mode
+- Airport metadata completeness depends on loaded slices
+- Score confidence is useful but not yet deeply diagnostic in UI
+
+### Not implemented yet
+- Production orchestration/scheduling
+- Real-time/near-real-time refresh
+- Auth, role-based access, observability, SLOs
+- Statistical calibration framework for score drift
+
+## Local run instructions
+
+### 1) Backend
 
 ```bash
 cd backend
@@ -59,7 +87,7 @@ cp .env.example .env
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### Frontend
+### 2) Frontend
 
 ```bash
 cd frontend
@@ -68,9 +96,11 @@ cp .env.example .env.local
 npm run dev
 ```
 
-App runs at `http://localhost:3000`. By default the frontend calls `/api/*`, and Next.js rewrites those requests to `BACKEND_URL` (default `http://127.0.0.1:8000`) to avoid browser CORS issues in local development.
+App URL: `http://localhost:3000`
 
-Example endpoints:
+By default, frontend requests `/api/*` and Next.js rewrites to backend `http://127.0.0.1:8000` for local development.
+
+### 3) Quick API checks
 
 ```bash
 curl http://localhost:8000/health
@@ -81,9 +111,23 @@ curl http://localhost:8000/airports/JFK/context
 curl http://localhost:8000/meta/methodology
 ```
 
-## Next steps
+## Limitations (explicit)
 
-- Validate pipeline scripts against real BTS/FAA source extracts
-- Implement ingestion scripts for selected public datasets
-- Expand analytics API depth and harden DB connectivity for production
-- Continue iterative UI polish after running-app review and user feedback
+- Historical coverage is limited to loaded datasets/slices.
+- Fallback CSV mode can be incomplete and should be treated carefully.
+- Scoring is heuristic and not validated for operational deployment decisions.
+- UX is portfolio-polished, but production non-functionals are still missing.
+
+## Roadmap
+
+See `docs/roadmap.md` for the phased path from MVP to production-grade platform.
+
+## Why this is a strong portfolio project
+
+This project demonstrates the intersection of:
+- Product strategy (decision-oriented UX)
+- Analytics architecture (traceable marts and data contracts)
+- Full-stack execution (frontend + backend integration)
+- Technical honesty (clear caveats, scope boundaries, and next steps)
+
+It is not positioned as “production-ready.” It is positioned as **high-quality, credible, and thoughtfully scoped**.

@@ -10,6 +10,7 @@ type Props = {
 
 export function RouteExploreCard({ origin, route }: Props) {
   const scoreText = route.latest_route_attractiveness_score !== null ? route.latest_route_attractiveness_score.toFixed(1) : "N/A";
+  const dealClass = route.latest_deal_signal ? `deal-${route.latest_deal_signal}` : "";
 
   return (
     <article className="route-card">
@@ -26,7 +27,9 @@ export function RouteExploreCard({ origin, route }: Props) {
       <dl>
         <div>
           <dt>Deal signal</dt>
-          <dd>{route.latest_deal_signal ?? "Not available"}</dd>
+          <dd>
+            <span className={`deal-pill ${dealClass}`}>{route.latest_deal_signal ?? "Not available"}</span>
+          </dd>
         </div>
         <div>
           <dt>Fare insight</dt>
@@ -45,6 +48,8 @@ export function RouteExploreCard({ origin, route }: Props) {
           <dd>{formatPercent(route.score_confidence)}</dd>
         </div>
       </dl>
+
+      <p className="muted card-footnote">Higher scores indicate stronger historical attractiveness, not guaranteed future prices.</p>
 
       <Link href={`/routes/${origin}/${route.destination.iata}`} className="details-link">
         Inspect route

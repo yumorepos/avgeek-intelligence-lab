@@ -39,7 +39,8 @@ a {
   background: linear-gradient(135deg, #101b2c 0%, #193355 100%);
   color: #f8fbff;
   border-radius: 16px;
-  padding: 1.6rem;
+  padding: 1.8rem;
+  box-shadow: 0 10px 24px rgba(16, 27, 44, 0.14);
 }
 
 .hero.compact {
@@ -73,6 +74,7 @@ a {
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 1rem;
+  box-shadow: 0 4px 12px rgba(15, 28, 44, 0.04);
 }
 
 .panel-header {
@@ -151,6 +153,7 @@ p {
   border-radius: 10px;
   background: #edf2f9;
   padding: 0.7rem;
+  border: 1px solid #dce6f4;
 }
 
 .status.error {
@@ -185,6 +188,35 @@ p {
   white-space: nowrap;
 }
 
+.deal-pill {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  background: #edf2f9;
+}
+
+.deal-strong_deal,
+.deal-deal {
+  background: #dff5ea;
+  color: #0b6d49;
+}
+
+.deal-neutral {
+  background: #eef1f8;
+  color: #334155;
+}
+
+.deal-expensive {
+  background: #fdecec;
+  color: #9e2a2a;
+}
+
+.card-footnote {
+  font-size: 0.82rem;
+  margin-bottom: 0.9rem;
+}
+
 .route-card dl,
 .kv-grid {
   display: grid;
@@ -207,6 +239,13 @@ p {
 
 .notice-warning {
   border-left: 4px solid #d67f08;
+}
+
+.provenance-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
 }
 
 .back-link {
@@ -269,6 +308,10 @@ p {
   border-radius: 999px;
   padding: 0.3rem 0.6rem;
   font-size: 0.82rem;
+}
+
+.chip-warning {
+  background: #fbe9cc;
 }
 
 @media (max-width: 700px) {

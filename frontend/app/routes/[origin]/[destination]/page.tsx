@@ -89,6 +89,14 @@ export default function RouteDetailPage({ params }: Props) {
             </p>
           </section>
 
+          <section className="panel">
+            <h2>Interpretation guide</h2>
+            <p className="muted">
+              This route brief combines observed fare and reliability history. It is suitable for exploratory analytics and product storytelling,
+              not for operational or financial commitments.
+            </p>
+          </section>
+
           <MetadataNotice metadata={route.metadata} />
 
           <section className="metrics-grid">
@@ -133,6 +141,7 @@ export default function RouteDetailPage({ params }: Props) {
             <article className="panel">
               <h3>Methodology hint</h3>
               <p>{route.methodology_hint}</p>
+              <p className="muted">Deal signal reflects relative pricing versus this route&apos;s own baseline, not absolute cheapness across all routes.</p>
             </article>
           </section>
 
@@ -165,7 +174,7 @@ export default function RouteDetailPage({ params }: Props) {
                 </div>
               </>
             ) : (
-              <p className="muted">Airport context could not be loaded for this destination.</p>
+              <p className="muted">Airport context could not be loaded for this destination. Route analysis still works, but demand context is incomplete.</p>
             )}
           </section>
         </>

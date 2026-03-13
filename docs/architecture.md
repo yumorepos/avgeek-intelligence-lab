@@ -1,111 +1,92 @@
-# Architecture (MVP Pipeline Foundation)
+# Architecture
 
-## Overview
-- **Frontend:** Next.js (scaffold only)
-- **Backend:** FastAPI MVP analytics API (health, airports, routes, metadata)
-- **Data pipeline:** Python batch scripts in `scripts/`
-- **Database:** PostgreSQL schema v1 in `sql/schema.sql`
+## System purpose
+Flight Price Intelligence Lab is an analytics product MVP that converts public aviation data into route-level insights for exploration and discussion.
 
-This document covers the implemented MVP data pipeline foundation only.
+It is a **portfolio-strength architecture**, not a production-grade platform yet.
 
-## Data flow by layer
+## High-level architecture
 
-### 1) Raw layer (`data/raw/`)
-Purpose: hold source-aligned, lightly normalized extracts from approved MVP sources.
+```text
+Public source extracts (CSV)
+        ↓
+  data/raw/ ingestion
+        ↓
+ data/staging/ normalization
+        ↓
+   data/marts/ aggregates + scoring
+        ↓
+PostgreSQL schema v1 (or CSV fallback for demos)
+        ↓
+ FastAPI analytics API
+        ↓
+ Next.js route intelligence frontend
+```
 
-Produced by:
-- `scripts/ingest_bts_ontime.py` → `data/raw/bts_ontime_raw.csv`
-- `scripts/ingest_bts_db1b.py` → `data/raw/bts_db1b_raw.csv`
-- `scripts/ingest_faa_enplanements.py` → `data/raw/faa_enplanements_raw.csv`
+## Components
 
-### 2) Staging layer (`data/staging/`)
-Purpose: standardize route/date and selected operational fields before mart aggregation.
+### Frontend (`frontend/`)
+- Next.js + TypeScript UI
+- Route Explorer (ranked cards by origin)
+- Route Detail (score breakdown + trend charts + airport context)
+- Explicit provenance/coverage messaging for trust
 
-Produced by:
-- `scripts/build_monthly_fares.py` → `data/staging/db1b_normalized.csv`
-- `scripts/build_ontime_stats.py` → `data/staging/ontime_normalized.csv`
+### Backend (`backend/`)
+- FastAPI service exposing read endpoints:
+  - `GET /health`
+  - `GET /airports/search?q=`
+  - `GET /routes/explore?origin=`
+  - `GET /routes/{origin}/{destination}`
+  - `GET /airports/{iata}/context`
+  - `GET /meta/methodology`
+- Typed schemas for stable response contracts
+- Metadata contract includes fallback/completeness indicators
 
-### 3) Marts layer (`data/marts/`)
-Purpose: schema-aligned analytical datasets at defined table grains.
+### Data pipeline (`scripts/` + `data/`)
+- **Raw layer:** source-aligned extracts
+- **Staging layer:** contract normalization (route keys, time fields)
+- **Marts layer:** product-serving aggregates (`monthly_fares`, `ontime_stats`, `cancellations`, `route_scores`)
+- **Load layer:** Postgres upsert flow (`scripts/load_postgres.py`)
 
-Produced by:
-- `scripts/build_monthly_fares.py` → `data/marts/monthly_fares.csv`
-- `scripts/build_ontime_stats.py` → `data/marts/ontime_stats.csv`, `data/marts/cancellations.csv`
-- `scripts/build_route_scores.py` → `data/marts/route_scores.csv` (first-pass heuristic scoring)
+### Storage (`sql/`)
+- PostgreSQL schema v1 focused on route intelligence use cases
+- Dimension + fact structure sufficient for MVP route explorer and route detail experiences
 
-### 4) Postgres load
-Purpose: upsert dimensions and facts into schema v1.
+## Runtime modes
 
-Executed by:
-- `scripts/load_postgres.py`
+### Preferred mode: Postgres-backed
+- API reads from relational marts loaded into Postgres
+- Most credible local demo when data is loaded correctly
 
-Flow inside loader:
-1. Read mart/raw files.
-2. Derive dimensions (`airports`, `airlines`, `routes`) from `route_key` and source codes.
-3. Upsert facts (`monthly_fares`, `ontime_stats`, `cancellations`, `airport_enplanements`, `route_scores`).
+### Demo mode: CSV fallback
+- Enabled with `FPI_USE_CSV_FALLBACK=true`
+- Useful for local demos when DB is unavailable
+- Coverage may be partial (airport metadata/reliability may be thin)
 
-## Source-to-table mapping
+## Design decisions
 
-- **BTS DB1B**
-  - Supports: `monthly_fares`
-  - Path: raw DB1B extract → staging normalized fares → route-month aggregation.
+1. **Explainability over complexity**
+   - Deterministic scoring and explicit caveats chosen over opaque model complexity.
+2. **Contract-driven API**
+   - Frontend consumes typed contracts, reducing presentation drift.
+3. **Trust-first product semantics**
+   - Provenance and fallback status treated as first-class UX data.
+4. **Scoped MVP boundaries**
+   - No orchestration/auth/infra expansion until core product signal quality is hardened.
 
-- **BTS On-Time Performance**
-  - Supports: `ontime_stats`, `cancellations`
-  - Path: raw on-time extract → staging normalized records → route-carrier-month aggregation.
+## Current strengths
+- End-to-end flow exists from data transformation to UI presentation.
+- Architectural separation is clear and maintainable.
+- Portfolio narrative aligns with actual implementation.
 
-- **FAA Enplanements**
-  - Supports: `airport_enplanements`
-  - Path: raw normalized enplanement file loaded as airport-year context.
+## Current limitations
+- No orchestration/scheduling, retries, or observability stack.
+- No production security, auth, or rate-limiting controls.
+- Data freshness and slice breadth depend on manual pipeline execution.
+- Scoring is heuristic and not yet calibrated for production decisioning.
 
-- **Derived route scoring layer**
-  - Supports: `route_scores`
-  - Path: marts inputs merged by route-month with transparent heuristic scoring (`v1_heuristic`).
-
-## Naming conventions
-- **Airport code:** `airport_iata`, `origin_iata`, `destination_iata` (uppercase 3-letter IATA)
-- **Airline code:** `carrier_code` (2–3 alphanumeric carrier code)
-- **Time fields:** `year` (4-digit), `month` (1–12)
-- **Route key in files:** `route_key` = `ORIGIN-DEST` (e.g., `JFK-LAX`)
-- **File naming:** source-aligned lower snake case, suffix `_raw.csv` in raw layer
-
-## Data-quality checks implemented in scripts
-- Missing/invalid airport codes
-- Missing carrier codes (on-time)
-- Invalid year/month values
-- Missing or malformed fare values
-- Malformed records that cannot map to route grain
-- Sparse operational fields (`ARR_DEL15`, `CANCELLED`) flagged as warnings
-
-Warnings are logged; invalid rows are skipped.
-
-## What is implemented now
-- Script-level ingestion/normalization foundation for approved MVP datasets.
-- Batch transformations from raw → staging → marts.
-- Simple Postgres loader with `--dry-run` mode and executable mode via `psycopg`.
-
-## What is scaffold only
-- `build_route_scores.py` now computes first-pass heuristic scoring for reliability, deal signals, and route attractiveness.
-- `avg_arrival_delay_minutes` is left blank pending standardized source mapping.
-
-## What is not implemented yet
-- Automated source download/auth workflows.
-- Orchestration/scheduling (intentionally excluded for MVP).
-- Advanced scoring formulas and production-grade observability.
-
-
-## API layer (implemented in this phase)
-
-Implemented endpoints in `backend/app/api/`:
-- `GET /health`
-- `GET /airports/search?q=`
-- `GET /routes/explore?origin=XXX`
-- `GET /routes/{origin}/{destination}`
-- `GET /airports/{iata}/context`
-- `GET /meta/methodology`
-
-Design notes:
-- Typed response contracts are defined in `backend/app/schemas/`.
-- Data endpoints are designed for PostgreSQL-first usage in product architecture, with an explicit local marts CSV fallback mode for MVP demos (`FPI_USE_CSV_FALLBACK=true`).
-- If neither Postgres nor fallback mode is available, data endpoints return `503` rather than synthetic data.
-- Methodology metadata is served from versioned API constants in the service layer.
+## What must happen before production-ready claims
+- Automated ingestion/orchestration with monitoring and alerting
+- Robust data QA and freshness SLAs
+- Score calibration and validation framework
+- Security/auth + deployment hardening + operational runbooks
