@@ -31,7 +31,7 @@ Purpose: schema-aligned analytical datasets at defined table grains.
 Produced by:
 - `scripts/build_monthly_fares.py` → `data/marts/monthly_fares.csv`
 - `scripts/build_ontime_stats.py` → `data/marts/ontime_stats.csv`, `data/marts/cancellations.csv`
-- `scripts/build_route_scores.py` → `data/marts/route_scores.csv` (scaffold metrics)
+- `scripts/build_route_scores.py` → `data/marts/route_scores.csv` (first-pass heuristic scoring)
 
 ### 4) Postgres load
 Purpose: upsert dimensions and facts into schema v1.
@@ -58,9 +58,9 @@ Flow inside loader:
   - Supports: `airport_enplanements`
   - Path: raw normalized enplanement file loaded as airport-year context.
 
-- **Derived score scaffold**
+- **Derived route scoring layer**
   - Supports: `route_scores`
-  - Path: marts inputs merged by route-month into placeholder score output.
+  - Path: marts inputs merged by route-month with transparent heuristic scoring (`v1_heuristic`).
 
 ## Naming conventions
 - **Airport code:** `airport_iata`, `origin_iata`, `destination_iata` (uppercase 3-letter IATA)
@@ -85,7 +85,7 @@ Warnings are logged; invalid rows are skipped.
 - Simple Postgres loader with `--dry-run` mode and executable mode via `psycopg`.
 
 ## What is scaffold only
-- `build_route_scores.py` uses conservative placeholder metric fields for parts of scoring.
+- `build_route_scores.py` now computes first-pass heuristic scoring for reliability, deal signals, and route attractiveness.
 - `avg_arrival_delay_minutes` is left blank pending standardized source mapping.
 
 ## What is not implemented yet

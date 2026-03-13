@@ -23,7 +23,7 @@ This repository is intended to demonstrate:
 - Historical fare trend view (from curated datasets)
 - Reliability summary (on-time and cancellations)
 - Airport context panel
-- Early route/deal score placeholders
+- Early explainable route/deal heuristic scoring
 
 ## Current repository status
 
@@ -35,7 +35,7 @@ This repository currently contains **project foundation scaffolding only**:
 - Implemented Postgres analytics schema v1 (`sql/schema.sql`)
 - Initial project documentation skeleton
 
-Analytics logic, full product UI, and production hardening are intentionally not implemented yet.
+Core analytics marts are implemented, including a first-pass heuristic `route_scores` layer; full product UI and production hardening are still intentionally not implemented yet.
 
 ## High-level architecture
 
