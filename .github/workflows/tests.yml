@@ -98,6 +98,8 @@ jobs:
           output: 'trivy-results.sarif'
       
       - name: Upload Trivy results to GitHub Security
+        if: github.repository == 'yumorepos/flight-price-intelligence-lab'  # Only if Advanced Security enabled
+        continue-on-error: true  # Don't fail if upload not available
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-results.sarif'
