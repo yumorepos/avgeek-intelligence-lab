@@ -105,6 +105,12 @@ npm run dev
 ```
 
 ### Full Stack (with Backend)
+
+Before running the backend, set the `FPI_DATABASE_URL` environment variable. You can create a `.env` file in the `backend` directory with content like:
+
+```
+FPI_DATABASE_URL=your_database_url
+```
 ```bash
 # Terminal 1: Backend
 cd backend
