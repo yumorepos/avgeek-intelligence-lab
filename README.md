@@ -208,7 +208,7 @@ MIT License - see [LICENSE](LICENSE) for details
 ## 👤 Author
 
 **Yumo Xu**  
-[GitHub](https://github.com/yumorepos) · [LinkedIn](https://linkedin.com/in/yumo-xu-1589b7326) · [Portfolio](https://portfolio-v2-lovat-one.vercel.app)
+[GitHub](https://github.com/yumorepos) · [LinkedIn](https://linkedin.com/in/yumo-xu-1589b7326) · [Portfolio](https://yumorepos.github.io)
 
 ---
 
