@@ -1,5 +1,15 @@
 {
+  "name": "avgeek-intelligence-lab",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix frontend run build",
+    "start": "npm --prefix frontend run start",
+    "preview": "npm --prefix frontend run start"
+  },
   "devDependencies": {
     "playwright": "^1.58.2"
-  }
+  },
+  "workspaces": [
+    "frontend"
+  ]
 }
