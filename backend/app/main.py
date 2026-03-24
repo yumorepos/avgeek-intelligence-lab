@@ -13,6 +13,7 @@ from app.api.health import router as health_router
 from app.api.intelligence import router as intelligence_router
 from app.api.meta import router as meta_router
 from app.api.routes import router as routes_router
+from app.core.config import settings
 from app.core.logging_config import LogConfig, setup_logging
 from app.middleware import ErrorHandlerMiddleware, validation_exception_handler
 
@@ -26,7 +27,15 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Application lifespan events."""
     # Startup
-    logger.info("Application startup", extra={"version": app.version})
+    logger.info(
+        "Application startup",
+        extra={
+            "version": app.version,
+            "database_mode": "postgres" if settings.database_url else "none",
+            "csv_fallback": settings.use_csv_fallback,
+            "cors_origins": settings.cors_origins,
+        },
+    )
     yield
     # Shutdown
     logger.info("Application shutdown")
@@ -44,12 +53,7 @@ def create_app() -> FastAPI:
     # CORS middleware
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "http://localhost:3000",
-            "http://127.0.0.1:3000",
-            "https://flight-price-intelligence-lab-iwnt.vercel.app",
-            "https://flight-price-intelligence-lab.vercel.app",
-        ],
+        allow_origins=settings.cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -60,9 +64,9 @@ def create_app() -> FastAPI:
     async def log_requests(request: Request, call_next):
         """Log all HTTP requests with duration."""
         start_time = time.time()
-        
+
         response = await call_next(request)
-        
+
         duration_ms = (time.time() - start_time) * 1000
         logger.info(
             f"{request.method} {request.url.path}",
@@ -74,7 +78,7 @@ def create_app() -> FastAPI:
                 "client": request.client.host if request.client else "unknown",
             },
         )
-        
+
         return response
 
     # Error handling middleware
@@ -98,6 +102,10 @@ def create_app() -> FastAPI:
             "version": "0.2.0",
             "docs": "/docs",
             "health": "/health",
+            "runtime": {
+                "database_configured": bool(settings.database_url),
+                "csv_fallback_enabled": settings.use_csv_fallback,
+            },
         }
 
     return app

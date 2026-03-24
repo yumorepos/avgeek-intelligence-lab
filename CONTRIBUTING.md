@@ -88,21 +88,23 @@ docker run -d \
 
 # Run migrations (if available)
 cd backend
-alembic upgrade head
+psql "$FPI_DATABASE_URL" -f ../sql/schema.sql
 ```
 
 ### 5. Environment Variables
 ```bash
 # Create .env file in backend/
 cat > backend/.env << EOF
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/flight_intelligence
-LOG_LEVEL=INFO
-LOG_FORMAT=json
+FPI_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/flight_intelligence
+FPI_USE_CSV_FALLBACK=true
+FPI_CORS_ORIGINS=http://localhost:3000
 EOF
 
 # Create .env.local in frontend/
 cat > frontend/.env.local << EOF
-NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+BACKEND_URL=http://localhost:8000
+USE_BACKEND_PROXY=true
 EOF
 ```
 

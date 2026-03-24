@@ -113,6 +113,23 @@ Backend-only API behavior:
 
 ---
 
+
+## Backend Deployment (Render Blueprint Included)
+
+Backend deploy config is included as `render.yaml` at repo root.
+
+- Build: `pip install -r requirements.txt`
+- Start: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+
+Required backend env for production:
+- `FPI_CORS_ORIGINS` includes your Vercel domain
+- `FPI_DATABASE_URL` (preferred) or `FPI_USE_CSV_FALLBACK=true`
+
+For frontend-backend connection in Vercel:
+- `NEXT_PUBLIC_API_BASE_URL=https://<backend-host>`
+- `BACKEND_URL=https://<backend-host>`
+- `USE_BACKEND_PROXY=true`
+
 ## Data Pipeline
 
 Core ingestion/build scripts:

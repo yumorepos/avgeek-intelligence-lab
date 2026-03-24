@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: avgeek-intelligence-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    autoDeploy: true
+    envVars:
+      - key: FPI_CORS_ORIGINS
+        sync: false
+      - key: FPI_DATABASE_URL
+        sync: false
+      - key: FPI_USE_CSV_FALLBACK
+        value: "true"

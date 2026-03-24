@@ -1,64 +1,71 @@
-# Deployment Guide (Truth-Clean, 2026-03-24)
+# Deployment Guide (Authoritative)
 
-This repository deploys the **Next.js frontend from `frontend/`**.
+This repository runs as a split deployment:
 
-It intentionally does **not** use a root `vercel.json`, root `package.json`, or root `package-lock.json`.
-
----
-
-## 1) Frontend on Vercel (authoritative path)
-
-### Required Vercel project settings
-
-- **Framework Preset:** `Next.js`
-- **Root Directory:** `frontend`
-- **Install Command:** `npm install`
-- **Build Command:** `npm run build`
-- **Output Directory:** `.next` (default Next.js output)
-
-### Node version
-
-- This repo's GitHub workflow tests frontend on Node 18.
-- On Vercel, use the default supported Node runtime for Next.js 14 (or set Node 18/20 explicitly in project settings if your org requires pinning).
-
-### Environment variables
-
-#### Minimum (frontend-only demo mode)
-- **None required**.
-- In this mode, the frontend uses internal Next routes and demo data for demo-only modules.
-
-#### Optional (backend-connected mode)
-- `NEXT_PUBLIC_API_BASE_URL` → public backend base URL (for browser/client fetches).
-- `BACKEND_URL` → backend base URL used by Next route handlers and optional proxy rewrites.
-- `USE_BACKEND_PROXY=true` → enables rewrite proxy from `/api/:path*` to `BACKEND_URL`.
+1. **Frontend**: Next.js app on Vercel from `frontend/`
+2. **Backend**: FastAPI service on Render (or any Python web host) from `backend/`
 
 ---
 
-## 2) What works in each mode
+## 1) Backend deployment (Render recommended)
 
-### Frontend-only demo mode (no backend env vars)
-- Main UI pages render.
-- Demo-backed modules (airlines/network/seasonality) work from local demo routes/data.
-- Backend-only intelligence endpoints return explicit 503 guidance when `BACKEND_URL` is unset.
+### Service settings
+- Root directory: `backend`
+- Build command: `pip install -r requirements.txt`
+- Start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
 
-### Backend-connected mode
-- Set `NEXT_PUBLIC_API_BASE_URL` to backend origin for browser API calls.
-- Optionally set `BACKEND_URL` + `USE_BACKEND_PROXY=true` to use Next proxy rewrites.
+A `render.yaml` blueprint is included at repo root and points to the same commands.
+
+### Backend environment variables
+- `FPI_DATABASE_URL` (optional, PostgreSQL URL)
+- `FPI_USE_CSV_FALLBACK=true` for CSV mode when DB is unavailable
+- `FPI_CORS_ORIGINS` as comma-separated list, for example:
+  - `https://<your-vercel-domain>,http://localhost:3000`
+
+### Backend readiness
+- `GET /health` → service + runtime mode
+- `GET /health/readiness` → returns 503 if no DB and no CSV fallback, or if CSV fallback is enabled but marts are empty
 
 ---
 
-## 3) Verification scope and limits
+## 2) Frontend deployment (Vercel)
 
-From this container/runtime, external deployment proof is limited by environment constraints:
-- npm registry/proxy behavior can block installs (`403 Forbidden` observed in this environment).
-- `vercel` CLI may be unavailable in this container.
+### Vercel project settings
+- Framework preset: `Next.js`
+- Root Directory: `frontend`
+- Install command: `npm install`
+- Build command: `npm run build`
 
-Therefore, this guide documents exact project settings but does not overclaim live deployment success from this runtime.
+### Required frontend env vars for backend-connected mode
+- `NEXT_PUBLIC_API_BASE_URL=https://<your-backend-host>`
+- `BACKEND_URL=https://<your-backend-host>`
+- `USE_BACKEND_PROXY=true`
+
+Notes:
+- `NEXT_PUBLIC_API_BASE_URL` is used by browser-side requests.
+- `BACKEND_URL` + `USE_BACKEND_PROXY=true` enables Next route-handler proxying for `/api/*` backend endpoints.
+
+---
+
+## 3) Post-deploy verification checklist
+
+1. Backend smoke test
+   - `GET https://<backend>/health`
+   - `GET https://<backend>/health/readiness`
+   - `GET https://<backend>/intelligence/routes/insights?airport_iata=JFK&limit=5`
+
+2. Frontend smoke test
+   - Open homepage and `/intelligence/competition`
+   - Confirm `/api/intelligence/routes/insights?...` no longer returns `503 Backend-only endpoint`
+
+3. CORS validation
+   - Verify frontend can call backend APIs directly from browser console/network tab
+   - Ensure deployed Vercel domain is present in `FPI_CORS_ORIGINS`
 
 ---
 
 ## 4) Do not reintroduce
 
-- Root `vercel.json` overrides.
-- Root npm workspace manifests for frontend deployment.
-- Duplicate deployment workflows that conflict with Vercel project Root Directory.
+- Root `vercel.json` overrides for frontend-only deployment
+- Root npm workspace manifests for Vercel build path
+- Conflicting deployment docs with different env names

@@ -7,7 +7,7 @@ This loader is intentionally simple and batch-oriented:
 
 Supported modes:
 - `--dry-run` (default): validates files and logs row counts only.
-- execution mode: requires `psycopg` and `--dsn`.
+- execution mode: requires `psycopg2` and `--dsn`.
 
 Notes:
 - Uses route_key format ORG-DEST to resolve route_id.
@@ -116,11 +116,11 @@ def main() -> None:
         return
 
     try:
-        import psycopg
+        import psycopg2
     except ImportError as exc:
-        raise RuntimeError("psycopg is required for non-dry-run loading") from exc
+        raise RuntimeError("psycopg2 is required for non-dry-run loading") from exc
 
-    with psycopg.connect(args.dsn) as conn:
+    with psycopg2.connect(args.dsn) as conn:
         with conn.cursor() as cur:
             for code in sorted(airports):
                 cur.execute(

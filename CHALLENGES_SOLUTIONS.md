@@ -163,24 +163,7 @@ Recruiters won't run code locally. If the live demo doesn't work, the project do
 ### The Solution
 **Multi-step fix:**
 
-1. **Created `vercel.json` in root**:
-   ```json
-   {
-     "version": 2,
-     "builds": [
-       {
-         "src": "frontend/package.json",
-         "use": "@vercel/next"
-       }
-     ],
-     "routes": [
-       {
-         "src": "/(.*)",
-         "dest": "frontend/$1"
-       }
-     ]
-   }
-   ```
+1. **Removed root deployment overrides** (`vercel.json`, root npm manifests) and used Vercel project Root Directory = `frontend/`.
 
 2. **Updated Vercel dashboard settings**:
    - Root Directory: `frontend`
@@ -208,7 +191,7 @@ Recruiters won't run code locally. If the live demo doesn't work, the project do
 
 ### What I Learned
 - **Always test deployment config locally** - Don't debug live
-- **Monorepo requires explicit routing** - Subdirectory projects need `vercel.json`
+- **Monorepo requires explicit project-root configuration** - use Vercel Root Directory (`frontend`) without root overrides unless required
 - **CORS is critical** - Frontend/backend separation requires proper headers
 
 ### Impact
