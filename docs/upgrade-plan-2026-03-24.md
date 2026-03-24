@@ -7,7 +7,7 @@ Upgrade repository into a truth-first avgeek intelligence product while fixing d
 
 ### Phase 1 — Audit and root-cause confirmation
 - Inspect canonical app paths (`frontend/app`) and deployment config state.
-- Validate whether root-level Vercel settings existed for frontend subdirectory deployment.
+- Validate deployment entry points and identify conflicting root/frontend install/build surfaces.
 - Identify misleading copy, demo-vs-real ambiguity, and dead routes/files.
 
 ### Phase 2 — Product truth upgrades
@@ -17,19 +17,20 @@ Upgrade repository into a truth-first avgeek intelligence product while fixing d
 - Add a dedicated data-status page with runtime mode and limitations.
 
 ### Phase 3 — Deployment reliability fix
-- Add `vercel.json` at repo root to install/build from `frontend` and output `frontend/.next`.
-- Keep config minimal and deterministic.
+- Remove conflicting root deployment artifacts (`vercel.json`, root npm manifests, redundant deploy workflow).
+- Keep Vercel deployment model simple: `frontend/` as the only app build root.
+- Avoid custom overrides unless a verified blocker requires them.
 
 ### Phase 4 — Verification
 - Run available checks in constrained environment.
-- Attempt live URL checks via HTTP probes.
-- Attempt screenshot capture; document blockers if browser runtime unavailable.
+- Attempt frontend install/build verification and document exact blockers.
+- Attempt live URL checks and document external limitations without overclaiming.
 
 ### Phase 5 — Cleanup
 - Remove archive/duplicate/dead files only after confirming they are non-runtime and stale.
 - Remove stale screenshot assets and obsolete scripts tied to deleted routes/old domains.
-- Update contribution docs to remove links to deleted artifacts.
+- Update contribution/deployment docs to remove contradictory historical guidance.
 
 ## Deferred / Not Yet Proven
 - Live public deployment rendering is not proven from this environment due network/tunnel restrictions.
-- Full frontend build/test is not proven in this environment due npm registry access restrictions.
+- Full frontend build/test is not proven in this environment when npm registry/proxy restrictions prevent dependency installation.

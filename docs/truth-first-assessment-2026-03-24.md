@@ -6,8 +6,8 @@
 - Several modules (`/airlines`, `/network`, `/seasonality`) remain demo-only and must stay labeled as such.
 
 ## Deployment Verdict
-- Public URL `https://avgeek-intelligence-lab.vercel.app/` is not publicly reachable from this environment (403/connection tunnel failure), so live rendering could not be directly validated here.
-- Repo root had no active Vercel configuration despite app living under `frontend/`, making misconfigured root builds a likely cause of broken/empty deploys.
+- Public URL reachability could not be directly validated from this environment at the time of assessment (environment tunnel/proxy limits were observed).
+- The repository now uses a frontend-only deployment model: Vercel should target `frontend/` with no root `vercel.json` override.
 
 ## Architecture Verdict
 - Canonical frontend is `frontend/` (Next.js 14).
@@ -29,7 +29,7 @@ Safe removals identified as non-runtime, stale, or duplicate reporting artifacts
 - stale `docs/images/*.png` tied to removed `/test-ui` and old deployments
 
 ## Highest-Leverage Actions Executed
-1. Added root-level `vercel.json` to force build/install from `frontend` for Vercel reliability.
+1. Consolidated deployment guidance around frontend-only Vercel root directory (`frontend`) and removal of conflicting root deployment surfaces.
 2. Reframed homepage and navigation around "Avgeek Intelligence Lab" with explicit trust and module-status messaging.
 3. Added `/about` data-status page to centralize runtime-mode and limitations disclosure.
 4. Removed stale/archive/dead files proven non-runtime and outdated.
