@@ -2,10 +2,12 @@ from fastapi import APIRouter, Query
 
 from app.schemas.intelligence import (
     AirportCompetitionResponse,
+    AirportInsightsResponse,
     AirportPeersResponse,
     AirportRoleResponse,
     RouteChangesResponse,
     RouteCompetitionResponse,
+    RouteInsightsResponse,
 )
 from app.services.analytics import AnalyticsService
 
@@ -64,3 +66,23 @@ def route_competition(
 @router.get("/airports/{iata}/competition", response_model=AirportCompetitionResponse)
 def airport_competition(iata: str) -> AirportCompetitionResponse:
     return service.airport_competition(iata=iata.strip().upper())
+
+
+@router.get("/routes/insights", response_model=RouteInsightsResponse)
+def route_insights(
+    airport_iata: str | None = Query(default=None, min_length=3, max_length=3),
+    origin_iata: str | None = Query(default=None, min_length=3, max_length=3),
+    destination_iata: str | None = Query(default=None, min_length=3, max_length=3),
+    limit: int = Query(default=50, ge=1, le=200),
+) -> RouteInsightsResponse:
+    return service.route_insights(
+        airport_iata=airport_iata.strip().upper() if airport_iata else None,
+        origin_iata=origin_iata.strip().upper() if origin_iata else None,
+        destination_iata=destination_iata.strip().upper() if destination_iata else None,
+        limit=limit,
+    )
+
+
+@router.get("/airports/{iata}/insights", response_model=AirportInsightsResponse)
+def airport_insights(iata: str) -> AirportInsightsResponse:
+    return service.airport_insights(iata=iata.strip().upper())

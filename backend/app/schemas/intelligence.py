@@ -110,3 +110,45 @@ class AirportCompetitionResponse(BaseModel):
     metrics: AirportCompetitionMetrics | None = None
     metadata: DataProvenance
     intelligence_meta: IntelligenceMeta
+
+
+class InsightMetricsSnapshot(BaseModel):
+    values: dict[str, float | int | str | None]
+
+
+class RouteInsight(BaseModel):
+    route_key: str
+    origin_iata: str
+    destination_iata: str
+    year: int
+    month: int
+    insight_label: str
+    explanation: str
+    confidence: str
+    metrics_snapshot: InsightMetricsSnapshot
+    methodology_version: str = "v0_competition_insights"
+
+
+class RouteInsightsResponse(BaseModel):
+    filters: dict[str, str | int | None]
+    insights: list[RouteInsight]
+    metadata: DataProvenance
+    intelligence_meta: IntelligenceMeta
+
+
+class AirportInsight(BaseModel):
+    iata: str
+    year: int
+    month: int
+    insight_label: str
+    explanation: str
+    confidence: str
+    metrics_snapshot: InsightMetricsSnapshot
+    methodology_version: str = "v0_competition_insights"
+
+
+class AirportInsightsResponse(BaseModel):
+    airport: AirportContextAirport
+    insights: list[AirportInsight]
+    metadata: DataProvenance
+    intelligence_meta: IntelligenceMeta

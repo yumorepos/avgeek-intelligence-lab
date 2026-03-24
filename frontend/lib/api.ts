@@ -269,6 +269,46 @@ export type AirportCompetitionResponse = {
   };
 };
 
+export type RouteInsightsResponse = {
+  filters: Record<string, string | number | null>;
+  insights: {
+    route_key: string;
+    origin_iata: string;
+    destination_iata: string;
+    year: number;
+    month: number;
+    insight_label: string;
+    explanation: string;
+    confidence: string;
+    metrics_snapshot: { values: Record<string, string | number | null> };
+    methodology_version: string;
+  }[];
+  metadata: DataProvenance;
+  intelligence_meta: {
+    methodology_version: string;
+    coverage_summary: string;
+  };
+};
+
+export type AirportInsightsResponse = {
+  airport: Airport;
+  insights: {
+    iata: string;
+    year: number;
+    month: number;
+    insight_label: string;
+    explanation: string;
+    confidence: string;
+    metrics_snapshot: { values: Record<string, string | number | null> };
+    methodology_version: string;
+  }[];
+  metadata: DataProvenance;
+  intelligence_meta: {
+    methodology_version: string;
+    coverage_summary: string;
+  };
+};
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
 
 function withApiHint(detail: string): string {
@@ -390,4 +430,22 @@ export function getRouteCompetition(params: {
 
 export function getAirportCompetition(iata: string): Promise<AirportCompetitionResponse> {
   return apiFetch(`/intelligence/airports/${encodeURIComponent(iata)}/competition`);
+}
+
+export function getRouteInsights(params: {
+  airport_iata?: string;
+  origin_iata?: string;
+  destination_iata?: string;
+  limit?: number;
+}): Promise<RouteInsightsResponse> {
+  const q = new URLSearchParams();
+  if (params.airport_iata) q.set("airport_iata", params.airport_iata);
+  if (params.origin_iata) q.set("origin_iata", params.origin_iata);
+  if (params.destination_iata) q.set("destination_iata", params.destination_iata);
+  if (params.limit) q.set("limit", String(params.limit));
+  return apiFetch(`/intelligence/routes/insights?${q.toString()}`);
+}
+
+export function getAirportInsights(iata: string): Promise<AirportInsightsResponse> {
+  return apiFetch(`/intelligence/airports/${encodeURIComponent(iata)}/insights`);
 }

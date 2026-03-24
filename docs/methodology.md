@@ -116,3 +116,17 @@ Confidence and coverage:
 - Confidence is higher with larger observed flight volume.
 - Low-volume slices and missing months degrade confidence and interpretability.
 - Competition metrics are constrained by loaded schedule slices; they are not full-market census outputs.
+
+## Insight layer (v0_competition_insights)
+
+Insight rules are deterministic and suppress low-confidence outputs:
+- `competition increasing`: HHI decreases materially and entrant pressure rises.
+- `market consolidation`: HHI increases materially with carrier exits.
+- `new entrant pressure`: entrants appear with upward pressure signal.
+- `unstable competition`: elevated entrant/exit churn.
+- `stable dominance`: dominant share remains above threshold.
+
+Each insight includes:
+- human-readable explanation,
+- supporting metric snapshot,
+- confidence based on flights observed + multi-period consistency.

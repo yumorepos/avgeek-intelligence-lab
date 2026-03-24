@@ -695,3 +695,85 @@ class AnalyticsRepository:
             "confidence": latest.get("confidence", "low"),
             "flights_observed": int(latest.get("flights_observed", 0)),
         }
+
+
+    def get_route_competition_history(self, route_key: str, periods: int = 6) -> list[dict]:
+        self._guard_data_access()
+        if self._use_db():
+            return self._db_rows(
+                """
+                SELECT route_key, origin_iata, destination_iata, year, month,
+                       active_carriers, dominant_carrier_share, carrier_concentration_hhi,
+                       entrant_count, exit_count, entrant_pressure_signal, competition_label,
+                       confidence, flights_observed
+                FROM route_competition_metrics
+                WHERE route_key = %s
+                ORDER BY year DESC, month DESC
+                LIMIT %s
+                """,
+                (route_key, periods),
+            )
+
+        rows = [r for r in self._read_csv("route_competition_metrics.csv") if r.get("route_key") == route_key]
+        parsed = []
+        for row in rows:
+            parsed.append(
+                {
+                    "route_key": row.get("route_key", ""),
+                    "origin_iata": row.get("origin_iata", ""),
+                    "destination_iata": row.get("destination_iata", ""),
+                    "year": int(row.get("year", 0)),
+                    "month": int(row.get("month", 0)),
+                    "active_carriers": int(row.get("active_carriers", 0)),
+                    "dominant_carrier_share": float(row.get("dominant_carrier_share", 0)),
+                    "carrier_concentration_hhi": float(row.get("carrier_concentration_hhi", 0)),
+                    "entrant_count": int(row.get("entrant_count", 0)),
+                    "exit_count": int(row.get("exit_count", 0)),
+                    "entrant_pressure_signal": row.get("entrant_pressure_signal", "stable"),
+                    "competition_label": row.get("competition_label", "concentrated"),
+                    "confidence": row.get("confidence", "low"),
+                    "flights_observed": int(row.get("flights_observed", 0)),
+                }
+            )
+        parsed.sort(key=lambda r: (r["year"], r["month"]), reverse=True)
+        return parsed[:periods]
+
+    def get_airport_competition_history(self, iata: str, periods: int = 6) -> list[dict]:
+        self._guard_data_access()
+        if self._use_db():
+            return self._db_rows(
+                """
+                SELECT iata, year, month, active_outbound_routes, active_carriers,
+                       dominant_carrier_share, carrier_concentration_hhi,
+                       contested_route_count, monopoly_route_count, contested_route_share,
+                       competition_label, confidence, flights_observed
+                FROM airport_competition_metrics
+                WHERE iata = %s
+                ORDER BY year DESC, month DESC
+                LIMIT %s
+                """,
+                (iata, periods),
+            )
+
+        rows = [r for r in self._read_csv("airport_competition_metrics.csv") if r.get("iata") == iata]
+        parsed = []
+        for row in rows:
+            parsed.append(
+                {
+                    "iata": row.get("iata", ""),
+                    "year": int(row.get("year", 0)),
+                    "month": int(row.get("month", 0)),
+                    "active_outbound_routes": int(row.get("active_outbound_routes", 0)),
+                    "active_carriers": int(row.get("active_carriers", 0)),
+                    "dominant_carrier_share": float(row.get("dominant_carrier_share", 0)),
+                    "carrier_concentration_hhi": float(row.get("carrier_concentration_hhi", 0)),
+                    "contested_route_count": int(row.get("contested_route_count", 0)),
+                    "monopoly_route_count": int(row.get("monopoly_route_count", 0)),
+                    "contested_route_share": float(row.get("contested_route_share", 0)),
+                    "competition_label": row.get("competition_label", "highly_concentrated"),
+                    "confidence": row.get("confidence", "low"),
+                    "flights_observed": int(row.get("flights_observed", 0)),
+                }
+            )
+        parsed.sort(key=lambda r: (r["year"], r["month"]), reverse=True)
+        return parsed[:periods]

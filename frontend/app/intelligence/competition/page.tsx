@@ -3,28 +3,45 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { MetadataNotice } from "@/components/MetadataNotice";
-import { AirportCompetitionResponse, RouteCompetitionResponse, getAirportCompetition, getRouteCompetition } from "@/lib/api";
+import {
+  AirportCompetitionResponse,
+  AirportInsightsResponse,
+  RouteCompetitionResponse,
+  RouteInsightsResponse,
+  getAirportCompetition,
+  getAirportInsights,
+  getRouteCompetition,
+  getRouteInsights,
+} from "@/lib/api";
 import { formatPercent } from "@/lib/format";
 
 export default function CompetitionIntelPage() {
   const [airport, setAirport] = useState("JFK");
   const [routeData, setRouteData] = useState<RouteCompetitionResponse | null>(null);
   const [airportData, setAirportData] = useState<AirportCompetitionResponse | null>(null);
+  const [routeInsights, setRouteInsights] = useState<RouteInsightsResponse | null>(null);
+  const [airportInsights, setAirportInsights] = useState<AirportInsightsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
       try {
         setError(null);
-        const [routes, airportComp] = await Promise.all([
+        const [routes, airportComp, routeInsightResp, airportInsightResp] = await Promise.all([
           getRouteCompetition({ airport_iata: airport, limit: 25 }),
           getAirportCompetition(airport),
+          getRouteInsights({ airport_iata: airport, limit: 10 }),
+          getAirportInsights(airport),
         ]);
         setRouteData(routes);
         setAirportData(airportComp);
+        setRouteInsights(routeInsightResp);
+        setAirportInsights(airportInsightResp);
       } catch (e) {
         setRouteData(null);
         setAirportData(null);
+        setRouteInsights(null);
+        setAirportInsights(null);
         setError(e instanceof Error ? e.message : "Failed to load competition intelligence.");
       }
     };
@@ -58,6 +75,21 @@ export default function CompetitionIntelPage() {
           <h2>Why this matters</h2>
           <p>{why}</p>
           <p className="muted mt-2">{airportData.intelligence_meta.coverage_summary}</p>
+        </section>
+      ) : null}
+
+      {airportInsights && airportInsights.insights.length > 0 ? (
+        <section className="panel">
+          <h2>Airport insight cards</h2>
+          <div className="route-grid mt-4">
+            {airportInsights.insights.map((insight, idx) => (
+              <article className="route-card" key={`${insight.insight_label}-${idx}`}>
+                <h3>{insight.insight_label}</h3>
+                <p>{insight.explanation}</p>
+                <p className="muted">Confidence: {insight.confidence}</p>
+              </article>
+            ))}
+          </div>
         </section>
       ) : null}
 
@@ -106,6 +138,26 @@ export default function CompetitionIntelPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </section>
+      ) : null}
+
+      {routeInsights && routeInsights.insights.length > 0 ? (
+        <section className="panel">
+          <h2>Route insight cards</h2>
+          <p className="muted">
+            Methodology: {routeInsights.intelligence_meta.methodology_version}. {routeInsights.intelligence_meta.coverage_summary}
+          </p>
+          <div className="route-grid mt-4">
+            {routeInsights.insights.map((insight, idx) => (
+              <article className="route-card" key={`${insight.route_key}-${insight.insight_label}-${idx}`}>
+                <h3>
+                  {insight.route_key} · {insight.insight_label}
+                </h3>
+                <p>{insight.explanation}</p>
+                <p className="muted">Confidence: {insight.confidence}</p>
+              </article>
+            ))}
           </div>
         </section>
       ) : null}

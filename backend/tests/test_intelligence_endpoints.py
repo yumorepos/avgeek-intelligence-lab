@@ -135,6 +135,58 @@ class StubIntelService:
             "intelligence_meta": {"methodology_version": "v0_competition", "coverage_summary": "stub"},
         }
 
+    def route_insights(self, **_kwargs):
+        return {
+            "filters": {"airport_iata": "JFK", "limit": 50},
+            "insights": [
+                {
+                    "route_key": "JFK-LAX",
+                    "origin_iata": "JFK",
+                    "destination_iata": "LAX",
+                    "year": 2026,
+                    "month": 1,
+                    "insight_label": "competition increasing",
+                    "explanation": "Concentration dropped and entrant appeared.",
+                    "confidence": "high",
+                    "metrics_snapshot": {"values": {"hhi_delta_vs_prev": -300}},
+                    "methodology_version": "v0_competition_insights",
+                }
+            ],
+            "metadata": {
+                "data_source": "postgres",
+                "is_fallback": False,
+                "data_complete": True,
+                "note": None,
+                "last_refreshed_at": None,
+            },
+            "intelligence_meta": {"methodology_version": "v0_competition_insights", "coverage_summary": "stub"},
+        }
+
+    def airport_insights(self, iata: str):
+        return {
+            "airport": {"iata": iata, "airport_name": "John F Kennedy Intl", "city": "New York", "state": "NY", "country": "US"},
+            "insights": [
+                {
+                    "iata": iata,
+                    "year": 2026,
+                    "month": 1,
+                    "insight_label": "stable dominance",
+                    "explanation": "Dominant share above threshold.",
+                    "confidence": "high",
+                    "metrics_snapshot": {"values": {"dominant_carrier_share": 0.55}},
+                    "methodology_version": "v0_competition_insights",
+                }
+            ],
+            "metadata": {
+                "data_source": "postgres",
+                "is_fallback": False,
+                "data_complete": True,
+                "note": None,
+                "last_refreshed_at": None,
+            },
+            "intelligence_meta": {"methodology_version": "v0_competition_insights", "coverage_summary": "stub"},
+        }
+
 
 def test_intelligence_endpoints_with_stubbed_service() -> None:
     intelligence.service = StubIntelService()
@@ -159,6 +211,14 @@ def test_intelligence_endpoints_with_stubbed_service() -> None:
     airport_comp = client.get("/intelligence/airports/JFK/competition")
     assert airport_comp.status_code == 200
     assert airport_comp.json()["metrics"]["competition_label"] == "competitive_but_concentrated"
+
+    route_insights = client.get("/intelligence/routes/insights?airport_iata=JFK")
+    assert route_insights.status_code == 200
+    assert route_insights.json()["insights"][0]["insight_label"] == "competition increasing"
+
+    airport_insights = client.get("/intelligence/airports/JFK/insights")
+    assert airport_insights.status_code == 200
+    assert airport_insights.json()["insights"][0]["insight_label"] == "stable dominance"
 
 
 def _write_csv(path: Path, headers: list[str], rows: list[list[object]]) -> None:
@@ -202,7 +262,7 @@ def test_csv_intelligence_repository_contract(monkeypatch, tmp_path: Path) -> No
             "confidence",
             "flights_observed",
         ],
-        [["JFK-LAX", "JFK", "LAX", 2026, 1, 3, 0.52, 3400.0, 1, 0, "pressure_up", "concentrated", "high", 310]],
+        [["JFK-LAX", "JFK", "LAX", 2026, 1, 3, 0.52, 3400.0, 1, 0, "pressure_up", "concentrated", "high", 310], ["JFK-LAX", "JFK", "LAX", 2025, 12, 2, 0.66, 3800.0, 0, 1, "pressure_down", "concentrated", "high", 280]],
     )
     _write_csv(
         marts / "airport_competition_metrics.csv",
@@ -221,7 +281,10 @@ def test_csv_intelligence_repository_contract(monkeypatch, tmp_path: Path) -> No
             "confidence",
             "flights_observed",
         ],
-        [["JFK", 2026, 1, 120, 8, 0.35, 1800, 65, 20, 0.54, "competitive_but_concentrated", "high", 900]],
+        [
+            ["JFK", 2026, 1, 120, 8, 0.55, 1800, 65, 20, 0.54, "competitive_but_concentrated", "high", 900],
+            ["JFK", 2025, 12, 118, 7, 0.52, 1950, 60, 24, 0.50, "competitive_but_concentrated", "high", 860],
+        ],
     )
     _write_csv(marts / "route_scores.csv", ["route_key", "year", "month", "route_attractiveness_score", "deal_signal"], [["JFK-LAX", 2026, 1, 80, "deal"]])
     _write_csv(marts / "monthly_fares.csv", ["route_key", "year", "month", "avg_fare_usd"], [["JFK-LAX", 2026, 1, 301]])
@@ -244,6 +307,12 @@ def test_csv_intelligence_repository_contract(monkeypatch, tmp_path: Path) -> No
 
     airport_comp = service.airport_competition("JFK")
     assert airport_comp.metrics is not None
+
+    route_insights = service.route_insights(airport_iata="JFK")
+    assert route_insights.insights
+
+    airport_insights = service.airport_insights("JFK")
+    assert airport_insights.insights
 
 
 def test_sparse_single_carrier_competition_case(monkeypatch, tmp_path: Path) -> None:

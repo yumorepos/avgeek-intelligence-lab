@@ -47,6 +47,10 @@ This project is **not production-hardened** and should be treated as an enthusia
   - `GET /intelligence/routes/competition`
 - Airport competition endpoint:
   - `GET /intelligence/airports/{iata}/competition`
+- Route insight endpoint:
+  - `GET /intelligence/routes/insights`
+- Airport insight endpoint:
+  - `GET /intelligence/airports/{iata}/insights`
 
 Data-model foundation now includes:
 - `schedule_snapshots`
