@@ -15,46 +15,62 @@ jobs:
   refresh-data:
     name: Refresh Aviation Data
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pandas numpy requests python-dotenv
-      
+          pip install pandas numpy requests python-dotenv psycopg2-binary
+
+      - name: Validate input file paths
+        env:
+          BTS_DB1B_INPUT: ${{ vars.BTS_DB1B_INPUT }}
+          BTS_ONTIME_INPUT: ${{ vars.BTS_ONTIME_INPUT }}
+          FAA_ENPLANEMENTS_INPUT: ${{ vars.FAA_ENPLANEMENTS_INPUT }}
+        run: |
+          test -n "$BTS_DB1B_INPUT" || { echo "Missing repo/environment variable: BTS_DB1B_INPUT"; exit 1; }
+          test -n "$BTS_ONTIME_INPUT" || { echo "Missing repo/environment variable: BTS_ONTIME_INPUT"; exit 1; }
+          test -n "$FAA_ENPLANEMENTS_INPUT" || { echo "Missing repo/environment variable: FAA_ENPLANEMENTS_INPUT"; exit 1; }
+          test -f "$BTS_DB1B_INPUT" || { echo "File not found: $BTS_DB1B_INPUT"; exit 1; }
+          test -f "$BTS_ONTIME_INPUT" || { echo "File not found: $BTS_ONTIME_INPUT"; exit 1; }
+          test -f "$FAA_ENPLANEMENTS_INPUT" || { echo "File not found: $FAA_ENPLANEMENTS_INPUT"; exit 1; }
+
       - name: Run data ingestion
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           FORCE_REFRESH: ${{ github.event.inputs.force_refresh }}
+          BTS_DB1B_INPUT: ${{ vars.BTS_DB1B_INPUT }}
+          BTS_ONTIME_INPUT: ${{ vars.BTS_ONTIME_INPUT }}
+          FAA_ENPLANEMENTS_INPUT: ${{ vars.FAA_ENPLANEMENTS_INPUT }}
         run: |
           echo "Starting data refresh..."
-          python scripts/ingest_bts_db1b.py
-          python scripts/ingest_bts_ontime.py
-          python scripts/ingest_faa_enplanements.py
-      
+          python scripts/ingest_bts_db1b.py --input "$BTS_DB1B_INPUT"
+          python scripts/ingest_bts_ontime.py --input "$BTS_ONTIME_INPUT"
+          python scripts/ingest_faa_enplanements.py --input "$FAA_ENPLANEMENTS_INPUT"
+
       - name: Build analytics marts
         run: |
           echo "Building analytics marts..."
           python scripts/build_monthly_fares.py
           python scripts/build_ontime_stats.py
           python scripts/build_route_scores.py
-      
+
       - name: Load to database
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           echo "Loading data to database..."
-          python scripts/load_postgres.py
-      
+          python scripts/load_postgres.py --dsn "$DATABASE_URL"
+
       - name: Create refresh report
         run: |
           echo "# Data Refresh Report" > refresh-report.md
@@ -63,14 +79,14 @@ jobs:
           echo "" >> refresh-report.md
           echo "## Files Updated" >> refresh-report.md
           ls -lh data/marts/ >> refresh-report.md
-      
+
       - name: Upload report
         uses: actions/upload-artifact@v4
         with:
           name: data-refresh-report
           path: refresh-report.md
           retention-days: 30
-      
+
       - name: Notify on failure
         if: failure()
         uses: actions/github-script@v7

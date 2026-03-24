@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:api-contracts": "node scripts/api-contract-test.mjs",
+    "test:e2e": "playwright test -c playwright.config.ts"
   },
   "dependencies": {
     "lucide-react": "^0.344.0",
@@ -24,6 +26,7 @@
     "eslint-config-next": "14.2.35",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
-    "typescript": "5.5.4"
+    "typescript": "5.5.4",
+    "playwright": "^1.55.1"
   }
 }

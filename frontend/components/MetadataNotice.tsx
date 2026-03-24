@@ -19,6 +19,7 @@ export function MetadataNotice({ metadata }: Props) {
       </div>
       <p className="muted">Use this as directional route intelligence. In fallback mode, coverage can be thinner by route/month.</p>
       {metadata.note ? <p className="muted">{metadata.note}</p> : null}
+      {metadata.last_refreshed_at ? <p className="muted">Last refreshed: {new Date(metadata.last_refreshed_at).toLocaleString()}</p> : null}
     </section>
   );
 }

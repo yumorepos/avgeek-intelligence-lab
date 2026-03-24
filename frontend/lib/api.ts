@@ -3,6 +3,7 @@ export type DataProvenance = {
   is_fallback: boolean;
   data_complete: boolean;
   note: string | null;
+  last_refreshed_at: string | null;
 };
 
 export type Airport = {
@@ -28,7 +29,7 @@ export type RouteExploreCard = {
     avg_ontime_rate: number | null;
     avg_cancellation_rate: number | null;
   };
-  score_confidence: number | null;
+  score_confidence: string | null;
 };
 
 export type RouteExploreResponse = {
@@ -86,6 +87,80 @@ export type AirportContextResponse = {
   metadata: DataProvenance;
 };
 
+
+export type AirlineOverviewResponse = {
+  airlines: {
+    carrier_code: string;
+    airline_name: string;
+    route_count: number;
+    avg_route_score: number;
+    avg_ontime_rate: number;
+  }[];
+  metadata: DataProvenance;
+};
+
+export type AirlineDetailResponse = {
+  carrier_code: string;
+  airline_name: string;
+  routes: {
+    origin: string;
+    destination: string;
+    route_score: number;
+    latest_fare: number;
+    latest_deal_signal: string;
+  }[];
+  monthly_trend: {
+    year: number;
+    month: number;
+    avg_fare_usd: number;
+    avg_ontime_rate: number;
+  }[];
+  metadata: DataProvenance;
+};
+
+export type NetworkHubResponse = {
+  hubs: {
+    origin: string;
+    destinations: string[];
+    route_count: number;
+  }[];
+  metadata: DataProvenance;
+};
+
+export type NetworkGeoResponse = {
+  airports: {
+    iata: string;
+    airport_name: string;
+    lat: number;
+    lon: number;
+  }[];
+  routes: {
+    origin: string;
+    destination: string;
+    dominant_carrier: string;
+    score: number;
+  }[];
+  metadata: DataProvenance;
+};
+
+export type SeasonalityResponse = {
+  baseline_average_fare_usd: number;
+  rows: {
+    month: number;
+    average_fare_usd: number;
+    seasonal_index: number;
+  }[];
+  metadata: DataProvenance;
+};
+
+export type MethodologyResponse = {
+  score_version: string;
+  metric_descriptions: Record<string, string>;
+  caveats: string[];
+  source_coverage_notes: string[];
+  metadata?: DataProvenance;
+};
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
 
 function withApiHint(detail: string): string {
@@ -132,4 +207,31 @@ export function getRouteDetail(origin: string, destination: string): Promise<Rou
 
 export function getAirportContext(iata: string): Promise<AirportContextResponse> {
   return apiFetch(`/airports/${encodeURIComponent(iata)}/context`);
+}
+
+export function getMethodology(): Promise<MethodologyResponse> {
+  return apiFetch("/meta/methodology");
+}
+
+
+export function getNetworkHubs(): Promise<NetworkHubResponse> {
+  return apiFetch("/network/hubs");
+}
+
+export function getSeasonalityIndex(): Promise<SeasonalityResponse> {
+  return apiFetch("/seasonality/index");
+}
+
+
+export function getAirlineOverview(): Promise<AirlineOverviewResponse> {
+  return apiFetch("/airlines/overview");
+}
+
+export function getNetworkGeo(): Promise<NetworkGeoResponse> {
+  return apiFetch("/network/geo");
+}
+
+
+export function getAirlineDetail(carrier: string): Promise<AirlineDetailResponse> {
+  return apiFetch(`/airlines/${encodeURIComponent(carrier)}/detail`);
 }

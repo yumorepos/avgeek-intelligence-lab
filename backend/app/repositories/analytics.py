@@ -6,27 +6,47 @@ from app.core.db import DatabaseUnavailableError
 
 
 class AnalyticsRepository:
-    """MVP analytics read repository.
+    """Analytics read repository.
 
-    PostgreSQL is the intended primary source. In this environment, optional CSV fallback
-    can be enabled with FPI_USE_CSV_FALLBACK=true for local marts-based responses.
+    Runtime behavior:
+    - If FPI_DATABASE_URL/DATABASE_URL is set, query PostgreSQL directly.
+    - Otherwise require explicit CSV fallback via FPI_USE_CSV_FALLBACK=true.
     """
 
     def __init__(self) -> None:
         self.repo_root = Path(__file__).resolve().parents[3]
         self.marts_dir = self.repo_root / "data" / "marts"
 
+    def _use_db(self) -> bool:
+        return bool(settings.database_url)
+
     def _guard_data_access(self) -> None:
-        if settings.database_url:
-            raise DatabaseUnavailableError(
-                "Postgres-oriented queries are designed but no PostgreSQL driver is installed in this runtime. "
-                "Use local CSV fallback for MVP demo by setting FPI_USE_CSV_FALLBACK=true."
-            )
+        if self._use_db():
+            return
         if not settings.use_csv_fallback:
             raise DatabaseUnavailableError(
                 "PostgreSQL is not configured in this environment. Set FPI_DATABASE_URL for DB access or "
                 "FPI_USE_CSV_FALLBACK=true for explicit local marts fallback."
             )
+
+    def _db_rows(self, sql: str, params: tuple = ()) -> list[dict]:
+        if not settings.database_url:
+            raise DatabaseUnavailableError("Database URL is not configured.")
+
+        try:
+            import psycopg2
+            from psycopg2.extras import RealDictCursor
+        except ImportError as exc:
+            raise DatabaseUnavailableError("psycopg2 is required for PostgreSQL-backed repository mode.") from exc
+
+        try:
+            with psycopg2.connect(settings.database_url) as conn:
+                with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                    cur.execute(sql, params)
+                    rows = cur.fetchall()
+                    return [dict(row) for row in rows]
+        except Exception as exc:  # pragma: no cover - depends on runtime DB
+            raise DatabaseUnavailableError(f"PostgreSQL query failed: {exc}") from exc
 
     def _read_csv(self, filename: str) -> list[dict]:
         path = self.marts_dir / filename
@@ -46,6 +66,25 @@ class AnalyticsRepository:
 
     def search_airports(self, query: str, limit: int = 10) -> list[dict]:
         self._guard_data_access()
+
+        if self._use_db():
+            q = f"%{query}%"
+            return self._db_rows(
+                """
+                SELECT
+                    a.iata_code AS iata,
+                    a.airport_name,
+                    a.city,
+                    a.state_code AS state,
+                    a.country_code AS country
+                FROM airports a
+                WHERE a.iata_code ILIKE %s OR a.airport_name ILIKE %s OR COALESCE(a.city, '') ILIKE %s
+                ORDER BY a.iata_code
+                LIMIT %s
+                """,
+                (q, q, q, limit),
+            )
+
         scores = self._read_csv("route_scores.csv")
         fares = self._read_csv("monthly_fares.csv")
         iatas = set()
@@ -60,6 +99,63 @@ class AnalyticsRepository:
 
     def get_route_explorer(self, origin_iata: str, limit: int = 25) -> list[dict]:
         self._guard_data_access()
+
+        if self._use_db():
+            return self._db_rows(
+                """
+                WITH latest_scores AS (
+                    SELECT DISTINCT ON (rs.route_id)
+                        rs.route_id,
+                        rs.route_attractiveness_score,
+                        rs.deal_signal,
+                        rs.year,
+                        rs.month
+                    FROM route_scores rs
+                    ORDER BY rs.route_id, rs.year DESC, rs.month DESC
+                ), latest_fares AS (
+                    SELECT DISTINCT ON (mf.route_id)
+                        mf.route_id,
+                        mf.avg_fare_usd
+                    FROM monthly_fares mf
+                    ORDER BY mf.route_id, mf.year DESC, mf.month DESC
+                ), reliability AS (
+                    SELECT
+                        os.route_id,
+                        AVG(os.ontime_rate) AS avg_ontime_rate,
+                        AVG(c.cancellation_rate) AS avg_cancellation_rate
+                    FROM ontime_stats os
+                    LEFT JOIN cancellations c
+                      ON c.route_id = os.route_id
+                     AND c.airline_id = os.airline_id
+                     AND c.year = os.year
+                     AND c.month = os.month
+                    GROUP BY os.route_id
+                )
+                SELECT
+                    ad.iata_code AS destination_iata,
+                    ad.airport_name AS destination_airport_name,
+                    ad.city AS destination_city,
+                    ad.state_code AS destination_state,
+                    ad.country_code AS destination_country,
+                    ls.route_attractiveness_score AS latest_route_attractiveness_score,
+                    ls.deal_signal,
+                    lf.avg_fare_usd AS latest_avg_fare_usd,
+                    rel.avg_ontime_rate,
+                    rel.avg_cancellation_rate,
+                    NULL::text AS score_confidence
+                FROM routes r
+                JOIN airports ao ON ao.airport_id = r.origin_airport_id
+                JOIN airports ad ON ad.airport_id = r.destination_airport_id
+                LEFT JOIN latest_scores ls ON ls.route_id = r.route_id
+                LEFT JOIN latest_fares lf ON lf.route_id = r.route_id
+                LEFT JOIN reliability rel ON rel.route_id = r.route_id
+                WHERE ao.iata_code = %s
+                ORDER BY ls.route_attractiveness_score DESC NULLS LAST
+                LIMIT %s
+                """,
+                (origin_iata, limit),
+            )
+
         scores = self._read_csv("route_scores.csv")
         fares = self._read_csv("monthly_fares.csv")
         latest_by_route: dict[str, dict] = {}
@@ -100,7 +196,7 @@ class AnalyticsRepository:
                     "latest_avg_fare_usd": latest_fare_by_route.get(route_key),
                     "avg_ontime_rate": None,
                     "avg_cancellation_rate": None,
-                    "score_confidence": None,
+                    "score_confidence": score.get("score_confidence"),
                 }
             )
         output.sort(key=lambda r: (r["latest_route_attractiveness_score"] is None, -(r["latest_route_attractiveness_score"] or 0)))
@@ -108,6 +204,97 @@ class AnalyticsRepository:
 
     def get_route_detail(self, origin_iata: str, destination_iata: str) -> dict | None:
         self._guard_data_access()
+
+        if self._use_db():
+            route_rows = self._db_rows(
+                """
+                SELECT
+                    r.route_id,
+                    ao.iata_code AS origin_iata,
+                    ao.airport_name AS origin_airport_name,
+                    ao.city AS origin_city,
+                    ao.state_code AS origin_state,
+                    ao.country_code AS origin_country,
+                    ad.iata_code AS destination_iata,
+                    ad.airport_name AS destination_airport_name,
+                    ad.city AS destination_city,
+                    ad.state_code AS destination_state,
+                    ad.country_code AS destination_country
+                FROM routes r
+                JOIN airports ao ON ao.airport_id = r.origin_airport_id
+                JOIN airports ad ON ad.airport_id = r.destination_airport_id
+                WHERE ao.iata_code = %s AND ad.iata_code = %s
+                LIMIT 1
+                """,
+                (origin_iata, destination_iata),
+            )
+            if not route_rows:
+                return None
+            route = route_rows[0]
+            route_id = route["route_id"]
+
+            fares = self._db_rows(
+                """
+                SELECT year, month, avg_fare_usd
+                FROM monthly_fares
+                WHERE route_id = %s
+                ORDER BY year, month
+                """,
+                (route_id,),
+            )
+
+            reliability = self._db_rows(
+                """
+                SELECT
+                    os.year,
+                    os.month,
+                    AVG(os.ontime_rate) AS ontime_rate,
+                    AVG(c.cancellation_rate) AS cancellation_rate
+                FROM ontime_stats os
+                LEFT JOIN cancellations c
+                  ON c.route_id = os.route_id
+                 AND c.airline_id = os.airline_id
+                 AND c.year = os.year
+                 AND c.month = os.month
+                WHERE os.route_id = %s
+                GROUP BY os.year, os.month
+                ORDER BY os.year, os.month
+                """,
+                (route_id,),
+            )
+
+            score_rows = self._db_rows(
+                """
+                SELECT year, month, reliability_score, fare_volatility, route_attractiveness_score, deal_signal
+                FROM route_scores
+                WHERE route_id = %s
+                ORDER BY year DESC, month DESC
+                LIMIT 1
+                """,
+                (route_id,),
+            )
+            latest_score = score_rows[0] if score_rows else None
+            cheapest = min(fares, key=lambda f: float(f["avg_fare_usd"])) if fares else None
+
+            return {
+                "route": {
+                    "origin_iata": route["origin_iata"],
+                    "origin_airport_name": route["origin_airport_name"],
+                    "origin_city": route["origin_city"],
+                    "origin_state": route["origin_state"],
+                    "origin_country": route["origin_country"],
+                    "destination_iata": route["destination_iata"],
+                    "destination_airport_name": route["destination_airport_name"],
+                    "destination_city": route["destination_city"],
+                    "destination_state": route["destination_state"],
+                    "destination_country": route["destination_country"],
+                },
+                "fares": fares,
+                "reliability": reliability,
+                "score": latest_score,
+                "cheapest_month": cheapest,
+            }
+
         route_key = f"{origin_iata}-{destination_iata}"
         fares = [r for r in self._read_csv("monthly_fares.csv") if r.get("route_key") == route_key]
         scores = [r for r in self._read_csv("route_scores.csv") if r.get("route_key") == route_key]
@@ -152,6 +339,39 @@ class AnalyticsRepository:
 
     def get_airport_context(self, iata: str) -> dict | None:
         self._guard_data_access()
+
+        if self._use_db():
+            airport_rows = self._db_rows(
+                """
+                SELECT iata_code AS iata, airport_name, city, state_code AS state, country_code AS country, airport_id
+                FROM airports
+                WHERE iata_code = %s
+                LIMIT 1
+                """,
+                (iata,),
+            )
+            if not airport_rows:
+                return None
+            airport = airport_rows[0]
+
+            enpl_rows = self._db_rows(
+                """
+                SELECT year, total_enplanements
+                FROM airport_enplanements
+                WHERE airport_id = %s
+                ORDER BY year DESC
+                LIMIT 1
+                """,
+                (airport["airport_id"],),
+            )
+
+            related_routes = self.get_route_explorer(origin_iata=iata, limit=5)
+            return {
+                "airport": {k: airport[k] for k in ("iata", "airport_name", "city", "state", "country")},
+                "enplanement": enpl_rows[0] if enpl_rows else None,
+                "related_routes": related_routes,
+            }
+
         explore = self.get_route_explorer(origin_iata=iata, limit=5)
         search = self.search_airports(query=iata, limit=1)
         if not search and not explore:

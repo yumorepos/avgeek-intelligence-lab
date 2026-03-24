@@ -15,7 +15,7 @@ class RouteExploreCard(BaseModel):
     latest_deal_signal: str | None = None
     headline_fare_insight: str | None = None
     reliability_summary: ReliabilitySummary
-    score_confidence: float | None = None
+    score_confidence: str | None = None
 
 
 class RouteExploreResponse(BaseModel):

@@ -6,3 +6,4 @@ class DataProvenance(BaseModel):
     is_fallback: bool = Field(default=False)
     data_complete: bool = Field(default=True)
     note: str | None = None
+    last_refreshed_at: str | None = None

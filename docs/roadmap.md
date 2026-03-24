@@ -5,38 +5,38 @@
 - 🟡 Partial / MVP quality
 - ⬜ Not started
 
-## Phase 1 — Foundation scaffold ✅
-- Repo structure and domain framing
-- Initial frontend/backend shells
-- Core docs skeleton
+## Phase 0 — Truth cleanup + naming cleanup ✅
+- Runtime-mode reality clarified in README
+- Contradictory production language removed
+- Product framed as modular aviation playground with price-intelligence core
 
-## Phase 2 — Data pipeline foundation ✅
-- Raw/staging/marts script flow
-- Initial schema and Postgres loader
-- First-pass data contracts
+## Phase 1 — IA repositioning ✅
+- Added global module navigation
+- Homepage repositioned as module hub
+- Price Intelligence explicitly retained as flagship module
 
-## Phase 3 — API + product MVP ✅
-- Airport search, route explore, route detail, context endpoints
-- Frontend route explorer and route detail experiences
-- Methodology endpoint and basic provenance metadata
+## Phase 2 — Demo/API parity fixes ✅
+- Added Next.js mock routes for route detail, airport context, methodology, network hubs, and seasonality index
+- Reduced broken navigation paths in mock mode
+- Confidence semantics standardized to categorical labels in contracts/UI
 
-## Phase 4 — Flagship polish + final audit (current) ✅
-- UX hierarchy polish and improved state copy
-- Stronger score/deal interpretation guidance
-- Clearer provenance/fallback trust messaging
-- Documentation upgraded for portfolio storytelling and honesty
-- Brutal audit of what is working vs partial vs missing
+## Phase 3 — New enthusiast modules ✅
+- Airport Intelligence page backed by `/api/airports/[iata]/context`
+- Airline Intelligence page backed by `/api/airlines/overview` with carrier drilldown page and trend charts
+- Route Network page with geospatial visualization backed by `/api/network/geo`
+- Seasonality page backed by `/api/seasonality/index`
+- Learn page backed by `/api/meta/methodology`
 
-## Phase 5 — Production hardening path 🟡
-Priority items before any production-ready claim:
-1. Data freshness orchestration + monitoring + alerts
-2. Security/auth + environment hardening
-3. Score calibration and validation framework
-4. Non-functional reliability (rate limiting, retries, observability)
-5. Deployment standards (CI/CD quality gates + runbooks)
+## Phase 4 — Hardening pass ✅ (MVP-consistency)
+- Backend repository now supports PostgreSQL query mode when `FPI_DATABASE_URL` is set
+- Data-refresh workflow now passes required ingest `--input` args and validates configured source paths
+- Added backend contract tests for categorical confidence + DB-mode branch behavior
+- Added Postgres integration tests covering happy path and edge/failure path assertions
+- Added frontend API contract tests and Playwright UI/E2E user-journey tests in CI
+- Data provenance now includes `last_refreshed_at` and is surfaced in module UI notices
 
-## Phase 6 — Strategic expansion ⬜
-Only after phase 5 is materially complete:
-- Additional source breadth and better coverage diagnostics
-- User personalization and alerting features
-- Advanced ranking/forecasting approaches with explainability controls
+## Next hardening targets 🟡
+1. Expand Postgres integration tests beyond fixture-level scope (pagination, null-heavy records, query performance)
+2. Add frontend UI-level integration/E2E tests (not just API contract checks)
+3. Deepen Airline Intelligence with carrier-level delay/cancellation trend charts
+4. Add live freshness telemetry sourced from actual pipeline refresh events

@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import HTTPException
 
 from app.core.config import settings
@@ -31,14 +33,16 @@ class AnalyticsService:
         self.repository = repository or AnalyticsRepository()
 
     def _metadata(self) -> DataProvenance:
+        refreshed = datetime.now(timezone.utc).isoformat()
         if settings.use_csv_fallback:
             return DataProvenance(
                 data_source="local_marts_csv",
                 is_fallback=True,
                 data_complete=False,
                 note="CSV fallback mode is enabled; airport names/city/state and reliability coverage may be incomplete.",
+                last_refreshed_at=refreshed,
             )
-        return DataProvenance()
+        return DataProvenance(last_refreshed_at=refreshed)
 
     def search_airports(self, query: str) -> AirportSearchResponse:
         try:
