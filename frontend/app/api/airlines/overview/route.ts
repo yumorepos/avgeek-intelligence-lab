@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { DEMO_AIRLINES, DEMO_ROUTES, demoMetadata } from "@/lib/demo-data";
+import { DEMO_AIRLINES, DEMO_ROUTES } from "@/lib/demo-data";
+import { demoMetadata } from "@/lib/server-metadata";
 
 export async function GET() {
   const byCarrier = DEMO_ROUTES.reduce<Record<string, { route_count: number; avg_score_total: number; avg_ontime_total: number }>>((acc, route) => {
@@ -22,6 +23,6 @@ export async function GET() {
 
   return NextResponse.json({
     airlines,
-    metadata: demoMetadata("Airline overview derived from demo route intelligence records."),
+    metadata: await demoMetadata("Airline overview derived from demo route intelligence records."),
   });
 }

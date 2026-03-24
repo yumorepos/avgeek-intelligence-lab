@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { demoMetadata, routesFrom } from "@/lib/demo-data";
+import { routesFrom } from "@/lib/demo-data";
+import { demoMetadata } from "@/lib/server-metadata";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -23,6 +24,6 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     origin,
     routes,
-    metadata: demoMetadata("Using mock data for demo. Backend not deployed yet."),
+    metadata: await demoMetadata("Using mock data for demo. Backend not deployed yet."),
   });
 }

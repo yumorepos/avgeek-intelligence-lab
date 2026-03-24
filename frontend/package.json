@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:api-contracts": "node scripts/api-contract-test.mjs"
+    "test:api-contracts": "node scripts/api-contract-test.mjs",
+    "test:e2e": "node ../node_modules/playwright/cli.js test -c playwright.config.ts"
   },
   "dependencies": {
     "lucide-react": "^0.344.0",

@@ -22,7 +22,7 @@
 
 ## Phase 3 — New enthusiast modules ✅
 - Airport Intelligence page backed by `/api/airports/[iata]/context`
-- Airline Intelligence page backed by `/api/airlines/overview`
+- Airline Intelligence page backed by `/api/airlines/overview` with carrier drilldown page and trend charts
 - Route Network page with geospatial visualization backed by `/api/network/geo`
 - Seasonality page backed by `/api/seasonality/index`
 - Learn page backed by `/api/meta/methodology`
@@ -32,6 +32,7 @@
 - Data-refresh workflow now passes required ingest `--input` args and validates configured source paths
 - Added backend contract tests for categorical confidence + DB-mode branch behavior
 - Added Postgres integration tests covering happy path and edge/failure path assertions
+- Added frontend API contract tests and Playwright UI/E2E user-journey tests in CI
 - Data provenance now includes `last_refreshed_at` and is surfaced in module UI notices
 
 ## Next hardening targets 🟡

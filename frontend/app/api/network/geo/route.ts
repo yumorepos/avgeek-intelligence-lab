@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { DEMO_AIRPORTS, DEMO_ROUTES, demoMetadata } from "@/lib/demo-data";
+import { DEMO_AIRPORTS, DEMO_ROUTES } from "@/lib/demo-data";
+import { demoMetadata } from "@/lib/server-metadata";
 
 export async function GET() {
   const airports = DEMO_AIRPORTS.map((a) => ({
@@ -19,6 +20,6 @@ export async function GET() {
   return NextResponse.json({
     airports,
     routes,
-    metadata: demoMetadata("Geospatial network derived from current demo route data."),
+    metadata: await demoMetadata("Geospatial network derived from current demo route data."),
   });
 }

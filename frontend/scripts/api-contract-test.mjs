@@ -74,6 +74,12 @@ async function run() {
     assert.ok(Array.isArray(airlines.airlines), "airlines.overview: airlines must be array");
     assertMetadata(airlines.metadata, "airlines.overview");
 
+    const airlineDetail = await get("/api/airlines/AA/detail");
+    assert.equal(airlineDetail.carrier_code, "AA");
+    assert.ok(Array.isArray(airlineDetail.routes), "airlines.detail: routes must be array");
+    assert.ok(Array.isArray(airlineDetail.monthly_trend), "airlines.detail: monthly_trend must be array");
+    assertMetadata(airlineDetail.metadata, "airlines.detail");
+
     const network = await get("/api/network/hubs");
     assert.ok(Array.isArray(network.hubs), "network.hubs: hubs must be array");
     assertMetadata(network.metadata, "network.hubs");

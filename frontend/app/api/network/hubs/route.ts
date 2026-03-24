@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { DEMO_ROUTES, demoMetadata } from "@/lib/demo-data";
+import { DEMO_ROUTES } from "@/lib/demo-data";
+import { demoMetadata } from "@/lib/server-metadata";
 
 export async function GET() {
   const byHub = DEMO_ROUTES.reduce<Record<string, string[]>>((acc, route) => {
@@ -16,6 +17,6 @@ export async function GET() {
 
   return NextResponse.json({
     hubs,
-    metadata: demoMetadata("Network hub view derived from demo route graph."),
+    metadata: await demoMetadata("Network hub view derived from demo route graph."),
   });
 }

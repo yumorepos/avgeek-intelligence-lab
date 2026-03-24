@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { DEMO_AIRPORTS, demoMetadata } from "@/lib/demo-data";
+import { DEMO_AIRPORTS } from "@/lib/demo-data";
+import { demoMetadata } from "@/lib/server-metadata";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -10,11 +11,11 @@ export async function GET(request: NextRequest) {
       airport.iata.toLowerCase().includes(query) ||
       airport.airport_name.toLowerCase().includes(query) ||
       airport.city.toLowerCase().includes(query),
-  ).map(({ enplanements: _e, ...airport }) => airport);
+  ).map(({ enplanements: _e, lat: _lat, lon: _lon, ...airport }) => airport);
 
   return NextResponse.json({
     query,
     results,
-    metadata: demoMetadata("Using mock data for demo. Backend not deployed yet."),
+    metadata: await demoMetadata("Using mock data for demo. Backend not deployed yet."),
   });
 }

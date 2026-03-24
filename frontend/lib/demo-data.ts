@@ -152,13 +152,3 @@ export function routesFrom(origin: string) {
 export function findRoute(origin: string, destination: string) {
   return DEMO_ROUTES.find((r) => r.origin === origin.toUpperCase() && r.destination === destination.toUpperCase()) ?? null;
 }
-
-export function demoMetadata(note: string) {
-  return {
-    data_source: "mock_demo_data",
-    is_fallback: true,
-    data_complete: false,
-    note,
-    last_refreshed_at: "2026-03-24T00:00:00Z",
-  };
-}

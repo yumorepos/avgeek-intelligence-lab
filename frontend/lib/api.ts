@@ -99,6 +99,25 @@ export type AirlineOverviewResponse = {
   metadata: DataProvenance;
 };
 
+export type AirlineDetailResponse = {
+  carrier_code: string;
+  airline_name: string;
+  routes: {
+    origin: string;
+    destination: string;
+    route_score: number;
+    latest_fare: number;
+    latest_deal_signal: string;
+  }[];
+  monthly_trend: {
+    year: number;
+    month: number;
+    avg_fare_usd: number;
+    avg_ontime_rate: number;
+  }[];
+  metadata: DataProvenance;
+};
+
 export type NetworkHubResponse = {
   hubs: {
     origin: string;
@@ -210,4 +229,9 @@ export function getAirlineOverview(): Promise<AirlineOverviewResponse> {
 
 export function getNetworkGeo(): Promise<NetworkGeoResponse> {
   return apiFetch("/network/geo");
+}
+
+
+export function getAirlineDetail(carrier: string): Promise<AirlineDetailResponse> {
+  return apiFetch(`/airlines/${encodeURIComponent(carrier)}/detail`);
 }

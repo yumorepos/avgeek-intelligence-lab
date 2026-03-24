@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { DEMO_ROUTES, demoMetadata } from "@/lib/demo-data";
+import { DEMO_ROUTES } from "@/lib/demo-data";
+import { demoMetadata } from "@/lib/server-metadata";
 
 export async function GET() {
   const monthAgg = new Map<number, { total: number; count: number }>();
@@ -32,6 +33,6 @@ export async function GET() {
   return NextResponse.json({
     baseline_average_fare_usd: Number(baseline.toFixed(2)),
     rows,
-    metadata: demoMetadata("Seasonality index is route-relative, derived from demo fare histories."),
+    metadata: await demoMetadata("Seasonality index is route-relative, derived from demo fare histories."),
   });
 }

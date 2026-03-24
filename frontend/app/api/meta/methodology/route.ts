@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { demoMetadata } from "@/lib/server-metadata";
 
 export async function GET() {
   return NextResponse.json({
@@ -19,12 +20,6 @@ export async function GET() {
       "Reliability: BTS On-Time Performance-derived on-time and cancellation marts.",
       "Airport context: FAA annual enplanements when available.",
     ],
-    metadata: {
-      data_source: "mock_demo_data",
-      is_fallback: true,
-      data_complete: false,
-      note: "Methodology payload is static for demo mode.",
-      last_refreshed_at: "2026-03-24T00:00:00Z",
-    },
+    metadata: await demoMetadata("Methodology payload is static for demo mode."),
   });
 }

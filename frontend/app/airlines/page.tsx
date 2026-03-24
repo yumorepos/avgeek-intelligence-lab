@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { MetadataNotice } from "@/components/MetadataNotice";
 import { AirlineOverviewResponse, getAirlineOverview } from "@/lib/api";
@@ -50,7 +51,7 @@ export default function AirlinesPage() {
                 <tbody>
                   {data.airlines.map((airline) => (
                     <tr key={airline.carrier_code} className="border-b border-gray-100">
-                      <td className="py-3 font-semibold">{airline.carrier_code} · {airline.airline_name}</td>
+                      <td className="py-3 font-semibold"><Link href={`/airlines/${airline.carrier_code}`} className="text-orange-700 hover:underline">{airline.carrier_code} · {airline.airline_name}</Link></td>
                       <td className="py-3">{airline.route_count}</td>
                       <td className="py-3">{airline.avg_route_score}</td>
                       <td className="py-3">{formatPercent(airline.avg_ontime_rate)}</td>
