@@ -38,6 +38,10 @@ export default function TestUIPage() {
         </p>
       </div>
 
+      <div className="panel">
+        <p className="badge badge-warning">Developer surface only · not a core product module</p>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         <EnhancedLineChart
           title="Fare Trend (Last 5 Months)"

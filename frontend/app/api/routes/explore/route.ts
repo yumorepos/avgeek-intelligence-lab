@@ -9,7 +9,7 @@ const MOCK_ROUTES: Record<string, any[]> = {
       latest_deal_signal: "deal",
       headline_fare_insight: "Latest fare: $310, trending -11.4% vs 5-month avg",
       reliability_summary: { avg_ontime_rate: 0.87, avg_cancellation_rate: 0.02 },
-      score_confidence: 0.85
+      score_confidence: "high"
     },
     {
       destination: { iata: "SFO", airport_name: "San Francisco Intl", city: "San Francisco", state: "CA", country: "USA" },
@@ -17,7 +17,7 @@ const MOCK_ROUTES: Record<string, any[]> = {
       latest_deal_signal: "strong_deal",
       headline_fare_insight: "Latest fare: $295, trending -15.2% vs 5-month avg",
       reliability_summary: { avg_ontime_rate: 0.89, avg_cancellation_rate: 0.01 },
-      score_confidence: 0.90
+      score_confidence: "high"
     },
     {
       destination: { iata: "MIA", airport_name: "Miami Intl", city: "Miami", state: "FL", country: "USA" },
@@ -25,7 +25,7 @@ const MOCK_ROUTES: Record<string, any[]> = {
       latest_deal_signal: "deal",
       headline_fare_insight: "Latest fare: $198, trending -8.3% vs 5-month avg",
       reliability_summary: { avg_ontime_rate: 0.91, avg_cancellation_rate: 0.01 },
-      score_confidence: 0.88
+      score_confidence: "high"
     }
   ],
   "LAX": [
@@ -35,7 +35,7 @@ const MOCK_ROUTES: Record<string, any[]> = {
       latest_deal_signal: "neutral",
       headline_fare_insight: "Latest fare: $315, trending +2.1% vs 5-month avg",
       reliability_summary: { avg_ontime_rate: 0.86, avg_cancellation_rate: 0.02 },
-      score_confidence: 0.83
+      score_confidence: "medium"
     },
     {
       destination: { iata: "SEA", airport_name: "Seattle Tacoma Intl", city: "Seattle", state: "WA", country: "USA" },
@@ -43,7 +43,7 @@ const MOCK_ROUTES: Record<string, any[]> = {
       latest_deal_signal: "strong_deal",
       headline_fare_insight: "Latest fare: $142, trending -18.5% vs 5-month avg",
       reliability_summary: { avg_ontime_rate: 0.92, avg_cancellation_rate: 0.01 },
-      score_confidence: 0.91
+      score_confidence: "high"
     }
   ]
 };

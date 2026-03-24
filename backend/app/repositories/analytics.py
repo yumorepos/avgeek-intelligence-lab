@@ -100,7 +100,7 @@ class AnalyticsRepository:
                     "latest_avg_fare_usd": latest_fare_by_route.get(route_key),
                     "avg_ontime_rate": None,
                     "avg_cancellation_rate": None,
-                    "score_confidence": None,
+                    "score_confidence": score.get("score_confidence"),
                 }
             )
         output.sort(key=lambda r: (r["latest_route_attractiveness_score"] is None, -(r["latest_route_attractiveness_score"] or 0)))

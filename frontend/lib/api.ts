@@ -28,7 +28,7 @@ export type RouteExploreCard = {
     avg_ontime_rate: number | null;
     avg_cancellation_rate: number | null;
   };
-  score_confidence: number | null;
+  score_confidence: string | null;
 };
 
 export type RouteExploreResponse = {
@@ -86,6 +86,13 @@ export type AirportContextResponse = {
   metadata: DataProvenance;
 };
 
+export type MethodologyResponse = {
+  score_version: string;
+  metric_descriptions: Record<string, string>;
+  caveats: string[];
+  source_coverage_notes: string[];
+};
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
 
 function withApiHint(detail: string): string {
@@ -132,4 +139,8 @@ export function getRouteDetail(origin: string, destination: string): Promise<Rou
 
 export function getAirportContext(iata: string): Promise<AirportContextResponse> {
   return apiFetch(`/airports/${encodeURIComponent(iata)}/context`);
+}
+
+export function getMethodology(): Promise<MethodologyResponse> {
+  return apiFetch("/meta/methodology");
 }

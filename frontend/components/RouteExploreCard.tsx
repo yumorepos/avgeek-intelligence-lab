@@ -68,7 +68,7 @@ export function RouteExploreCard({ origin, route }: Props) {
         </div>
         <div>
           <dt className="text-gray-500 mb-1">Confidence</dt>
-          <dd className="text-gray-900 font-bold text-sm">{formatPercent(route.score_confidence)}</dd>
+          <dd className="text-gray-900 font-bold text-sm">{route.score_confidence ?? "unknown"}</dd>
         </div>
         <div>
           <dt className="text-gray-500 mb-1">Score</dt>

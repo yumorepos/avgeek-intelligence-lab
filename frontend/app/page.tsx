@@ -1,11 +1,45 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { AirportSearchPanel } from "@/components/AirportSearchPanel";
 import { MetadataNotice } from "@/components/MetadataNotice";
 import { RouteExploreCard } from "@/components/RouteExploreCard";
 import { AirportSearchResponse, RouteExploreResponse, exploreRoutes, searchAirports } from "@/lib/api";
+
+const MODULES = [
+  {
+    href: "/",
+    title: "Price Intelligence",
+    desc: "Explore route-level attractiveness, deal signal, fare trend, and reliability context.",
+    status: "Live now",
+  },
+  {
+    href: "/airports",
+    title: "Airport Intelligence",
+    desc: "Compare airport traffic context and top outbound route signals.",
+    status: "Live now",
+  },
+  {
+    href: "/network",
+    title: "Route Network",
+    desc: "Browse route network patterns from major U.S. hubs.",
+    status: "Live now",
+  },
+  {
+    href: "/seasonality",
+    title: "Seasonality",
+    desc: "Inspect monthly pricing seasonality and interpretation caveats.",
+    status: "Live now",
+  },
+  {
+    href: "/learn",
+    title: "Learn",
+    desc: "Review methodology, confidence semantics, and demo-mode limitations.",
+    status: "Live now",
+  },
+];
 
 export default function HomePage() {
   const [query, setQuery] = useState("JFK");
@@ -71,30 +105,32 @@ export default function HomePage() {
   return (
     <main className="page-shell">
       <section className="hero">
-        <p className="eyebrow">Flight Price Intelligence Lab</p>
-        <h1>Route Explorer</h1>
+        <p className="eyebrow">Aviation Playground Lab</p>
+        <h1>Explore aviation through transparent data modules</h1>
         <p>
-          Evaluate route attractiveness, price context, and reliability signals in a transparent analytics workspace for aviation and
-          travel product conversations.
+          This project runs in explicit runtime modes (mock demo, CSV fallback, or backend API) and surfaces provenance on every core screen.
         </p>
       </section>
 
       <section className="panel">
-        <h2>How to read this screen</h2>
-        <div className="metrics-grid">
-          <article>
-            <h3>Route score (0–100)</h3>
-            <p className="muted">A heuristic blend of fare attractiveness, reliability, and fare stability. It is directional, not predictive.</p>
-          </article>
-          <article>
-            <h3>Deal signal</h3>
-            <p className="muted">Compares latest observed fare against the route&apos;s own historical baseline (strong_deal to expensive).</p>
-          </article>
-          <article>
-            <h3>Confidence and provenance</h3>
-            <p className="muted">Low confidence or fallback mode means you should treat insights as exploratory due to thin or partial coverage.</p>
-          </article>
+        <div className="panel-header">
+          <h2>Module hub</h2>
+          <p className="muted">Price Intelligence remains the flagship module; additional modules broaden avgeek exploration.</p>
         </div>
+        <div className="route-grid mt-0">
+          {MODULES.map((mod) => (
+            <Link href={mod.href} key={mod.href} className="route-card">
+              <h3>{mod.title}</h3>
+              <p>{mod.desc}</p>
+              <span className="badge badge-success w-fit">{mod.status}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="panel">
+        <h2>Price Intelligence · Route Explorer</h2>
+        <p className="muted">Directional route scoring for exploratory analysis; not a booking or forecasting guarantee.</p>
       </section>
 
       <AirportSearchPanel
