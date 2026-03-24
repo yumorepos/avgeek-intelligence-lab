@@ -494,17 +494,10 @@ git push
 #### 404 on Routes
 **Problem:** Next.js routes return 404
 
-**Solution:** Check `vercel.json` routing:
-```json
-{
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "frontend/$1"
-    }
-  ]
-}
-```
+**Solution:** For this repository, do **not** add legacy `routes`/`builds` overrides in a root `vercel.json`.
+1. In Vercel Project Settings, set `Root Directory` to `frontend`.
+2. Keep framework as `Next.js` so Vercel auto-detects routes from the app build output.
+3. Redeploy after removing conflicting `vercel.json` overrides.
 
 ---
 

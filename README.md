@@ -99,12 +99,17 @@ npm run dev
 
 ## Frontend Deployment (Vercel)
 
-This repo now includes a root `vercel.json` that builds from `frontend/`:
-- install: `npm ci --prefix frontend`
-- build: `npm run build --prefix frontend`
-- output: `frontend/.next`
+Deploy the Next.js app from the `frontend/` directory in Vercel Project Settings:
+- Framework Preset: `Next.js`
+- Root Directory: `frontend`
+- Build Command: `npm run build`
+- Install Command: `npm install`
 
-If your Vercel project previously pointed at repo root without subdirectory config, redeploy after pulling latest changes.
+This repository intentionally does **not** use a root `vercel.json` override so Vercel can auto-detect and serve the Next.js app correctly from the configured root directory.
+
+Backend-only API behavior:
+- UI routes (`/`, `/airports`, `/routes/*`, etc.) are served by Next.js frontend deployment.
+- Backend data endpoints are separate and require backend env/config (`NEXT_PUBLIC_API_BASE_URL`, optional `BACKEND_URL` + `USE_BACKEND_PROXY=true` if you want Next.js server-side proxy rewrites).
 
 ---
 
