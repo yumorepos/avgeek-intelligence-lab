@@ -10,60 +10,60 @@ import { AirportSearchResponse, RouteExploreResponse, exploreRoutes, searchAirpo
 
 const MODULES = [
   {
-    href: "/",
-    title: "Price Intelligence",
-    desc: "Explore route-level attractiveness, deal signal, fare trend, and reliability context.",
-    status: "Live now",
-  },
-  {
     href: "/intelligence/route-changes",
-    title: "Route Changes Intel",
-    desc: "Backend-powered launch/cut/resume/frequency-change event feed.",
+    title: "Route Changes Intelligence",
+    desc: "Launch, cut, resume, and frequency-shift events with confidence tagging.",
     status: "Backend-supported",
   },
   {
     href: "/intelligence/airports",
-    title: "Airport Role Intel",
-    desc: "Backend-powered airport role metrics and peer comparison.",
+    title: "Airport Role Intelligence",
+    desc: "Role labels, concentration, diversity, and peer comparison from latest snapshots.",
     status: "Backend-supported",
   },
   {
     href: "/intelligence/competition",
-    title: "Competition Intel",
-    desc: "Backend-powered carrier concentration and entrant-pressure metrics.",
+    title: "Competition Intelligence",
+    desc: "Route + airport concentration and entrant-pressure diagnostics with trust controls.",
     status: "Backend-supported",
   },
   {
+    href: "/",
+    title: "Route Price Intelligence",
+    desc: "Directional route attractiveness and reliability context (not a booking or forecasting engine).",
+    status: "Live now",
+  },
+  {
     href: "/airports",
-    title: "Airport Intelligence",
-    desc: "Compare airport traffic context and top outbound route signals.",
+    title: "Airport Profiles",
+    desc: "Airport context and top outbound route signals for exploration.",
     status: "Live now",
   },
   {
     href: "/airlines",
     title: "Airline Intelligence",
-    desc: "Compare carrier footprint, route-quality score, and reliability context.",
-    status: "Demo-only API surface",
+    desc: "Carrier footprint and trends currently powered by demo data only.",
+    status: "Demo-only",
   },
   {
     href: "/network",
-    title: "Route Network",
-    desc: "Browse route network patterns from major U.S. hubs.",
-    status: "Demo-only API surface",
+    title: "Network Explorer",
+    desc: "Hub-and-spoke route exploration currently powered by demo data only.",
+    status: "Demo-only",
   },
   {
     href: "/seasonality",
-    title: "Seasonality",
-    desc: "Inspect monthly pricing seasonality and interpretation caveats.",
-    status: "Demo-only API surface",
-  },
-  {
-    href: "/learn",
-    title: "Learn",
-    desc: "Review methodology, confidence semantics, and demo-mode limitations.",
-    status: "Live now",
+    title: "Seasonality Explorer",
+    desc: "Monthly seasonality index currently powered by demo data only.",
+    status: "Demo-only",
   },
 ];
+
+const STATUS_COUNTS = {
+  backend: MODULES.filter((m) => m.status === "Backend-supported").length,
+  live: MODULES.filter((m) => m.status === "Live now").length,
+  demo: MODULES.filter((m) => m.status === "Demo-only").length,
+};
 
 export default function HomePage() {
   const [query, setQuery] = useState("JFK");
@@ -129,32 +129,57 @@ export default function HomePage() {
   return (
     <main className="page-shell">
       <section className="hero">
-        <p className="eyebrow">Aviation Playground Lab</p>
-        <h1>Explore aviation through transparent data modules</h1>
+        <p className="eyebrow">Truth-first intelligence for avgeeks</p>
+        <h1>Avgeek Intelligence Lab</h1>
         <p>
-          This project runs in explicit runtime modes (mock demo, CSV fallback, or backend API) and surfaces provenance on every core screen.
+          This product separates backend-supported intelligence from demo-only modules, and exposes methodology, freshness,
+          and data limitations on every core workflow.
+        </p>
+      </section>
+
+      <section className="panel">
+        <div className="panel-header">
+          <h2>Current intelligence coverage</h2>
+          <p className="muted">Real status snapshot from current product surface (not roadmap claims).</p>
+        </div>
+        <div className="metrics-grid">
+          <article>
+            <h3>Backend-supported modules</h3>
+            <p className="text-3xl font-bold text-orange-700">{STATUS_COUNTS.backend}</p>
+          </article>
+          <article>
+            <h3>Live core modules</h3>
+            <p className="text-3xl font-bold text-orange-700">{STATUS_COUNTS.live}</p>
+          </article>
+          <article>
+            <h3>Demo-only modules</h3>
+            <p className="text-3xl font-bold text-orange-700">{STATUS_COUNTS.demo}</p>
+          </article>
+        </div>
+        <p className="muted mt-4">
+          Want the full trust surface? See <Link href="/about" className="text-orange-700 font-semibold">Data Status</Link> and <Link href="/learn" className="text-orange-700 font-semibold">Methodology</Link>.
         </p>
       </section>
 
       <section className="panel">
         <div className="panel-header">
           <h2>Module hub</h2>
-          <p className="muted">Price Intelligence remains the flagship module; additional modules broaden avgeek exploration.</p>
+          <p className="muted">Use status badges to distinguish real backend intelligence from demo exploration.</p>
         </div>
         <div className="route-grid mt-0">
           {MODULES.map((mod) => (
             <Link href={mod.href} key={mod.href} className="route-card">
               <h3>{mod.title}</h3>
               <p>{mod.desc}</p>
-              <span className="badge badge-success w-fit">{mod.status}</span>
+              <span className={`badge w-fit ${mod.status === "Demo-only" ? "badge-warning" : "badge-success"}`}>{mod.status}</span>
             </Link>
           ))}
         </div>
       </section>
 
       <section className="panel">
-        <h2>Price Intelligence · Route Explorer</h2>
-        <p className="muted">Directional route scoring for exploratory analysis; not a booking or forecasting guarantee.</p>
+        <h2>Route Price Intelligence</h2>
+        <p className="muted">Directional route scoring for exploratory analysis; never a booking recommendation or guarantee.</p>
       </section>
 
       <AirportSearchPanel
@@ -175,13 +200,13 @@ export default function HomePage() {
       <section className="panel">
         <div className="panel-header">
           <h2>Routes from {selectedOrigin || "—"}</h2>
-          <p className="muted">Ranked routes with latest score, fare insight, and reliability cues.</p>
+          <p className="muted">Ranked routes with score, fare narrative, reliability cues, and provenance metadata.</p>
         </div>
 
         {isLoadingRoutes ? <p className="status">Loading routes and score summaries…</p> : null}
         {routesError ? <p className="status error">Route explorer error: {routesError}</p> : null}
         {!isLoadingRoutes && !routesError && routesData && routesData.routes.length === 0 ? (
-          <p className="status">No routes available for this origin in the loaded MVP slice yet.</p>
+          <p className="status">No routes available for this origin in the currently loaded data slice.</p>
         ) : null}
 
         {routesData ? <MetadataNotice metadata={routesData.metadata} /> : null}

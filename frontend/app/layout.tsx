@@ -3,8 +3,9 @@ import "./globals.css";
 import { AppNav } from "@/components/AppNav";
 
 export const metadata: Metadata = {
-  title: "Aviation Playground Lab",
-  description: "A modular aviation enthusiast playground with transparent flight-price intelligence.",
+  title: "Avgeek Intelligence Lab",
+  description:
+    "Truth-first aviation intelligence for avgeeks: route changes, airport roles, competition, and transparent methodology.",
 };
 
 export default function RootLayout({
