@@ -96,6 +96,18 @@ npm run dev
 
 ---
 
+
+## Frontend Deployment (Vercel)
+
+This repo now includes a root `vercel.json` that builds from `frontend/`:
+- install: `npm ci --prefix frontend`
+- build: `npm run build --prefix frontend`
+- output: `frontend/.next`
+
+If your Vercel project previously pointed at repo root without subdirectory config, redeploy after pulling latest changes.
+
+---
+
 ## Data Pipeline
 
 Core ingestion/build scripts:

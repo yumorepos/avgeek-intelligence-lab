@@ -455,7 +455,7 @@ test('renders route card with score', () => {
 - **README.md:** Overview, setup, features
 - **API docs:** Endpoint changes
 - **Architecture docs:** System design changes
-- **CHALLENGES_SOLUTIONS.md:** New technical challenges
+- **docs/truth-first-assessment-2026-03-24.md:** Product truth and current known gaps
 
 ### Documentation Style
 
@@ -510,7 +510,7 @@ Returns a list of routes.
 1. Check [README.md](README.md)
 2. Check [docs/](docs/) directory
 3. Search existing issues
-4. Read [CHALLENGES_SOLUTIONS.md](CHALLENGES_SOLUTIONS.md)
+4. Read [docs/truth-first-assessment-2026-03-24.md](docs/truth-first-assessment-2026-03-24.md)
 
 ### How to Ask
 - Create a GitHub Discussion (preferred)

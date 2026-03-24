@@ -2,7 +2,8 @@ import { expect, test } from "playwright/test";
 
 test("price intelligence journey: homepage to route detail", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Explore aviation through transparent data modules" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Avgeek Intelligence Lab/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Current intelligence coverage/i })).toBeVisible();
 
   await page.getByRole("button", { name: "Search" }).click();
   await expect(page.getByRole("heading", { name: /Routes from/i })).toBeVisible();
