@@ -31,6 +31,12 @@ async function get(path) {
   return res.json();
 }
 
+async function getStatus(path, expectedStatus) {
+  const res = await fetch(`${BASE}${path}`);
+  assert.equal(res.status, expectedStatus, `Expected ${expectedStatus} for ${path}, got ${res.status}`);
+  return res.json();
+}
+
 function assertMetadata(meta, endpoint) {
   assert.ok(meta, `${endpoint}: missing metadata`);
   for (const key of ["data_source", "is_fallback", "data_complete", "note", "last_refreshed_at"]) {
@@ -92,6 +98,12 @@ async function run() {
     const seasonality = await get("/api/seasonality/index");
     assert.ok(Array.isArray(seasonality.rows), "seasonality.index: rows must be array");
     assertMetadata(seasonality.metadata, "seasonality.index");
+
+    // Truth-drift guard: flagship wedge endpoints are backend-only when frontend runs standalone.
+    const routeChanges = await getStatus("/api/intelligence/routes/changes?airport_iata=JFK", 503);
+    assert.match(routeChanges.detail, /Backend-only endpoint/i);
+    const routeCompetition = await getStatus("/api/intelligence/routes/competition?airport_iata=JFK", 503);
+    assert.match(routeCompetition.detail, /Backend-only endpoint/i);
 
     console.log("✅ Frontend API contract tests passed");
   } finally {

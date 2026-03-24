@@ -62,6 +62,11 @@ jobs:
           echo "Building analytics marts..."
           python scripts/build_monthly_fares.py
           python scripts/build_ontime_stats.py
+          python scripts/build_schedule_snapshots.py
+          python scripts/build_route_change_events.py
+          python scripts/build_airport_role_metrics.py
+          python scripts/build_route_competition_metrics.py
+          python scripts/build_airport_competition_metrics.py
           python scripts/build_route_scores.py
 
       - name: Load to database

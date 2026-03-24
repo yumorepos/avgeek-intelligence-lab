@@ -1,3 +1,8 @@
+# ⚠️ Historical document (stale for current repo state)
+
+This file is preserved for project history. It is **not** the current truth source.
+Use `README.md` (Reality Matrix) as authoritative status.
+
 # Phase 2 Complete - Project Transformation ✅
 
 **Date:** 2026-03-17  

@@ -31,6 +31,11 @@ export default function SeasonalityPage() {
         <h1>Monthly pricing pattern explorer</h1>
         <p>Route-relative seasonality snapshots with caveat-first interpretation.</p>
       </section>
+      <section className="panel">
+        <p className="status">
+          Demo-only surface: this module currently uses frontend mock API routes, not backend intelligence endpoints.
+        </p>
+      </section>
 
       {error ? <p className="status error">Seasonality error: {error}</p> : null}
 

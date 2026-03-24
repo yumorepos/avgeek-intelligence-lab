@@ -1,57 +1,74 @@
-# ✈️ Aviation Playground Lab (formerly Flight Price Intelligence Lab)
+# ✈️ Avgeek Intelligence Lab
 
-> A modular aviation enthusiast playground with a strong **flight price intelligence** core.
+> Truth-first aviation intelligence project focused on **Airport / Route Competitiveness Intelligence**.
 
-## Current Reality (Truth-First)
+## Current Reality (verified 2026-03-24)
 
-This repository supports three runtime modes:
+This repo currently supports three runtime modes:
 
-1. **Mock demo mode (default frontend `/api`)**
-   - Fast local demo with deterministic mock data.
-   - Now includes parity for airport search, route explore, route detail, airport context, and methodology.
+1. **Frontend mock mode (`/api`)**
+   - Default when running only `frontend`.
+   - Some legacy modules are still mock/demo-only.
 2. **Backend CSV fallback mode** (`FPI_USE_CSV_FALLBACK=true`)
-   - FastAPI serves local marts CSV data with explicit coverage caveats.
-3. **Backend API mode** (`NEXT_PUBLIC_API_BASE_URL=http://localhost:8000`)
-   - Frontend uses FastAPI endpoints.
+   - FastAPI reads local marts CSV files.
+3. **Backend PostgreSQL mode** (`FPI_DATABASE_URL` or `DATABASE_URL`)
+   - FastAPI reads relational marts.
 
-If you want Next.js to proxy `/api/*` to backend, set `USE_BACKEND_PROXY=true` and `BACKEND_URL=http://127.0.0.1:8000`.
-
-This project is **MVP+ portfolio-grade**, not production-hardened.
+This project is **not production-hardened** and should be treated as an enthusiast intelligence MVP.
 
 ---
 
-## Product Modules
+## Reality Matrix (truth surface)
 
-- **Price Intelligence** (flagship): route scoring, deal signal, fare/reliability context
-- **Airport Intelligence**: airport context and outbound route cues
-- **Airline Intelligence**: carrier footprint + route score/reliability overview
-- **Route Network**: geospatial route visualization from current route data
-- **Seasonality**: monthly fare pattern interpretation surface
-- **Learn**: methodology, caveats, and source coverage notes
+| Module | Runtime mode | Data source | Truth status |
+|---|---|---|---|
+| Price Intelligence (`/`, `/routes/*`) | Backend + frontend parity | Backend marts / demo fallback | **Partial, real backend exists** |
+| Airport Intelligence (`/airports`) | Backend + frontend parity | Backend marts / demo fallback | **Partial, real backend exists** |
+| **Route Changes Intel** (`/intelligence/route-changes`) | **Backend-first** | `route_change_events` mart | **Real backend-supported wedge** |
+| **Airport Role Intel** (`/intelligence/airports`) | **Backend-first** | `airport_role_metrics` mart | **Real backend-supported wedge** |
+| **Competition Intel** (`/intelligence/competition`) | **Backend-first** | `route_competition_metrics`, `airport_competition_metrics` | **Real backend-supported wedge** |
+| Airline Intelligence (`/airlines`) | Frontend mock APIs | `frontend/lib/demo-data.ts` | **Demo-only** |
+| Route Network (`/network`) | Frontend mock APIs | `frontend/lib/demo-data.ts` | **Demo-only** |
+| Seasonality (`/seasonality`) | Frontend mock APIs | `frontend/lib/demo-data.ts` | **Demo-only** |
+| Learn (`/learn`) | Frontend static/methodology endpoint | static + metadata | **Partial documentation surface** |
 
 ---
 
-## Tech Stack
+## Flagship Wedge (implemented)
 
-- **Frontend:** Next.js 14, TypeScript, Tailwind CSS, Lucide
-- **Backend:** FastAPI, Pydantic
-- **Data/ETL:** Python scripts (BTS/FAA normalization + marts)
-- **Storage model:** PostgreSQL schema v1 + CSV fallback
-- **CI:** GitHub Actions (backend tests/lint, frontend lint/build, Trivy scan)
+### Airport / Route Competitiveness Intelligence
+- Route launch/cut/resume/frequency-change intelligence endpoint:
+- `GET /intelligence/routes/changes`
+- Airport role metrics endpoint:
+  - `GET /intelligence/airports/{iata}/role`
+- Airport peer comparison endpoint:
+  - `GET /intelligence/airports/{iata}/peers`
+- Route competition endpoint:
+  - `GET /intelligence/routes/competition`
+- Airport competition endpoint:
+  - `GET /intelligence/airports/{iata}/competition`
+
+Data-model foundation now includes:
+- `schedule_snapshots`
+- `route_change_events`
+- `airport_role_metrics`
+- `route_competition_metrics`
+- `airport_competition_metrics`
+
+---
+
+## Important limitations
+
+- No real-time aviation feed in this repo.
+- Frequency and role metrics are MVP directional signals based on loaded slices.
+- If required marts are missing, backend responses may be sparse/empty.
+- Demo-only modules are explicitly labeled in UI and should not be interpreted as live intelligence.
 
 ---
 
 ## Quick Start
 
-### A) Frontend demo mode (fastest)
-```bash
-cd frontend
-npm install
-npm run dev
-```
-Open http://localhost:3000
-
-### B) Full stack
+### A) Backend + frontend (recommended for flagship wedge)
 ```bash
 # Terminal 1
 cd backend
@@ -64,49 +81,38 @@ npm install
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8000 npm run dev
 ```
 
+### B) Frontend-only demo mode
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
 ---
 
-## Data Pipeline Notes
+## Data Pipeline
 
-The pipeline scripts are local-file oriented and require explicit input files for ingestion scripts.
-See:
+Core ingestion/build scripts:
 - `scripts/ingest_bts_db1b.py`
 - `scripts/ingest_bts_ontime.py`
 - `scripts/ingest_faa_enplanements.py`
-
-The marts and schema are still highly reusable for expanded aviation modules.
-
----
-
-
-
-## Data Refresh Workflow Inputs
-
-The scheduled `data-refresh.yml` workflow expects these repository/environment variables to point to readable source files:
-- `BTS_DB1B_INPUT`
-- `BTS_ONTIME_INPUT`
-- `FAA_ENPLANEMENTS_INPUT`
-
-The workflow validates these paths before ingestion and then passes them explicitly to ingest scripts.
-
-## Honest Limitations
-
-- No real-time flight or price ingestion in this repo.
-- Postgres repository path is scaffolded but fallback-first in current environment.
-- Data quality/coverage depends on loaded local slices.
-- Advanced modules (airline/fleet/reliability deep-dive) are staged roadmap items.
+- `scripts/build_monthly_fares.py`
+- `scripts/build_ontime_stats.py`
+- `scripts/build_schedule_snapshots.py`
+- `scripts/build_route_change_events.py`
+- `scripts/build_airport_role_metrics.py`
+- `scripts/build_route_scores.py`
+- `scripts/build_route_competition_metrics.py`
+- `scripts/build_airport_competition_metrics.py`
 
 ---
 
-## Roadmap Summary
+## Next wedge expansions
 
-1. Truth/claim alignment ✅
-2. IA modular repositioning ✅
-3. Demo parity across core endpoints ✅
-4. New enthusiast modules (airport/network/seasonality/learn) ✅ baseline
-5. Ongoing hardening and data depth ⏳
-
----
+After hardening current flagship wedge:
+1. Carrier competition intelligence
+2. Reliability disruption monitor
+3. Alliance/fleet intelligence (later)
 
 ## License
 

@@ -16,6 +16,24 @@ const MODULES = [
     status: "Live now",
   },
   {
+    href: "/intelligence/route-changes",
+    title: "Route Changes Intel",
+    desc: "Backend-powered launch/cut/resume/frequency-change event feed.",
+    status: "Backend-supported",
+  },
+  {
+    href: "/intelligence/airports",
+    title: "Airport Role Intel",
+    desc: "Backend-powered airport role metrics and peer comparison.",
+    status: "Backend-supported",
+  },
+  {
+    href: "/intelligence/competition",
+    title: "Competition Intel",
+    desc: "Backend-powered carrier concentration and entrant-pressure metrics.",
+    status: "Backend-supported",
+  },
+  {
     href: "/airports",
     title: "Airport Intelligence",
     desc: "Compare airport traffic context and top outbound route signals.",
@@ -25,19 +43,19 @@ const MODULES = [
     href: "/airlines",
     title: "Airline Intelligence",
     desc: "Compare carrier footprint, route-quality score, and reliability context.",
-    status: "Live now",
+    status: "Demo-only API surface",
   },
   {
     href: "/network",
     title: "Route Network",
     desc: "Browse route network patterns from major U.S. hubs.",
-    status: "Live now",
+    status: "Demo-only API surface",
   },
   {
     href: "/seasonality",
     title: "Seasonality",
     desc: "Inspect monthly pricing seasonality and interpretation caveats.",
-    status: "Live now",
+    status: "Demo-only API surface",
   },
   {
     href: "/learn",

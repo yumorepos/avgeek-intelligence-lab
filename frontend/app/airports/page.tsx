@@ -33,6 +33,11 @@ export default function AirportIntelligencePage() {
         <h1>Airport context and outbound route signals</h1>
         <p>Inspect airport profile context and related route deal signals.</p>
       </section>
+      <section className="panel">
+        <p className="status">
+          Backend parity exists for this module. In frontend-only mode, responses come from demo API routes.
+        </p>
+      </section>
 
       <section className="panel">
         <h2>Select airport</h2>

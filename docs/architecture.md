@@ -1,7 +1,7 @@
 # Architecture
 
 ## System purpose
-Flight Price Intelligence Lab is an analytics product MVP that converts public aviation data into route-level insights for exploration and discussion.
+Avgeek Intelligence Lab is an analytics product MVP that converts public aviation data into route-level and airport-competitiveness insights for exploration and discussion.
 
 It is a **portfolio-strength architecture**, not a production-grade platform yet.
 
@@ -29,6 +29,9 @@ PostgreSQL schema v1 (or CSV fallback for demos)
 - Next.js + TypeScript UI
 - Route Explorer (ranked cards by origin)
 - Route Detail (score breakdown + trend charts + airport context)
+- Route Changes Intelligence view (backend-first)
+- Airport Role & Peer Intelligence view (backend-first)
+- Carrier Competition Intelligence view (backend-first)
 - Explicit provenance/coverage messaging for trust
 
 ### Backend (`backend/`)
@@ -39,13 +42,18 @@ PostgreSQL schema v1 (or CSV fallback for demos)
   - `GET /routes/{origin}/{destination}`
   - `GET /airports/{iata}/context`
   - `GET /meta/methodology`
+  - `GET /intelligence/routes/changes`
+  - `GET /intelligence/routes/competition`
+  - `GET /intelligence/airports/{iata}/role`
+  - `GET /intelligence/airports/{iata}/peers`
+  - `GET /intelligence/airports/{iata}/competition`
 - Typed schemas for stable response contracts
 - Metadata contract includes fallback/completeness indicators
 
 ### Data pipeline (`scripts/` + `data/`)
 - **Raw layer:** source-aligned extracts
 - **Staging layer:** contract normalization (route keys, time fields)
-- **Marts layer:** product-serving aggregates (`monthly_fares`, `ontime_stats`, `cancellations`, `route_scores`)
+- **Marts layer:** product-serving aggregates (`monthly_fares`, `ontime_stats`, `cancellations`, `route_scores`, `schedule_snapshots`, `route_change_events`, `airport_role_metrics`, `route_competition_metrics`, `airport_competition_metrics`)
 - **Load layer:** Postgres upsert flow (`scripts/load_postgres.py`)
 
 ### Storage (`sql/`)

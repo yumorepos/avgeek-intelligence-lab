@@ -87,3 +87,32 @@ The product cannot credibly claim (yet):
 2. Add minimum-data badges for each route card/detail view
 3. Tune thresholds/weights using retrospective evaluation
 4. Add documented confidence taxonomy (low/medium/high definitions)
+
+## Competitiveness intelligence (v0)
+
+The repository now includes an early competitiveness layer:
+- `schedule_snapshots` (frequency proxy)
+- `route_change_events` (launch/cut/resume/frequency-change detection)
+- `airport_role_metrics` (role and peer comparison proxies)
+
+These are **directional MVP metrics**, not final network-strategy truth. Interpret with loaded-coverage caveats.
+
+### Carrier competition model (v0_competition)
+
+Route-level metrics:
+- `active_carriers`: carriers with non-zero observed scheduled flights in route-month.
+- `dominant_carrier_share`: largest carrier flight share in route-month.
+- `carrier_concentration_hhi`: `sum((share_pct)^2)` concentration proxy.
+- `entrant_pressure_signal`: compares active-carrier set with prior observed period (`pressure_up`, `pressure_down`, `rotation`, `stable`).
+- `competition_label`: `monopoly`, `concentrated`, `contested`, `fragmented`.
+
+Airport-level metrics:
+- `active_carriers` across outbound schedule footprint.
+- `dominant_carrier_share` and airport-level concentration proxy.
+- `contested_route_share` from route competition labels.
+- `competition_label`: `single_carrier_dominant`, `highly_concentrated`, `competitive_but_concentrated`, `broadly_competitive`.
+
+Confidence and coverage:
+- Confidence is higher with larger observed flight volume.
+- Low-volume slices and missing months degrade confidence and interpretability.
+- Competition metrics are constrained by loaded schedule slices; they are not full-market census outputs.

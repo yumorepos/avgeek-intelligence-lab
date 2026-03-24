@@ -30,6 +30,11 @@ export default function AirlinesPage() {
         <h1>Carrier-level route performance view</h1>
         <p>Compare carrier footprint, route attractiveness, and reliability context.</p>
       </section>
+      <section className="panel">
+        <p className="status">
+          Demo-only surface: this module currently uses frontend mock API routes, not backend intelligence endpoints.
+        </p>
+      </section>
 
       {error ? <p className="status error">Airline intelligence error: {error}</p> : null}
 

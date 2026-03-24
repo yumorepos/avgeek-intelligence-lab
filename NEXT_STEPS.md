@@ -1,3 +1,8 @@
+# ⚠️ Historical document (stale for current repo state)
+
+This file is preserved for project history. It is **not** the current truth source.
+Use `README.md` (Reality Matrix) as authoritative status.
+
 # Immediate Next Steps - Phase 1 Completion
 
 **Status:** Deployment fix prepared, awaiting user action  
