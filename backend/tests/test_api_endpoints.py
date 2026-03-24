@@ -96,6 +96,14 @@ def test_methodology_endpoint_shape() -> None:
     assert body["score_version"] == "v1_heuristic"
     assert "metric_descriptions" in body
 
+    evidence = client.get("/meta/evidence")
+    assert evidence.status_code == 200
+    assert "coverage" in evidence.json()
+
+    quality = client.get("/meta/insight-quality")
+    assert quality.status_code == 200
+    assert "label_distribution" in quality.json()
+
 
 def test_airports_and_routes_endpoints_with_stubbed_services() -> None:
     stub = StubService()

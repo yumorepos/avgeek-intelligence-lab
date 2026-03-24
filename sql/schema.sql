@@ -97,6 +97,89 @@ CREATE TABLE IF NOT EXISTS route_scores (
     CHECK (deal_signal IN ('strong_deal', 'deal', 'neutral', 'expensive'))
 );
 
+
+
+-- Grain: one row per route + carrier + year + month schedule snapshot
+CREATE TABLE IF NOT EXISTS schedule_snapshots (
+    route_id BIGINT NOT NULL REFERENCES routes(route_id),
+    airline_id BIGINT NOT NULL REFERENCES airlines(airline_id),
+    year SMALLINT NOT NULL,
+    month SMALLINT NOT NULL CHECK (month BETWEEN 1 AND 12),
+    flights_scheduled INTEGER NOT NULL CHECK (flights_scheduled >= 0),
+    seats_scheduled INTEGER,
+    PRIMARY KEY (route_id, airline_id, year, month)
+);
+
+-- Grain: one row per route + year + month event classification
+CREATE TABLE IF NOT EXISTS route_change_events (
+    route_id BIGINT NOT NULL REFERENCES routes(route_id),
+    route_key TEXT NOT NULL,
+    origin_iata CHAR(3) NOT NULL,
+    destination_iata CHAR(3) NOT NULL,
+    dominant_carrier VARCHAR(3),
+    year SMALLINT NOT NULL,
+    month SMALLINT NOT NULL CHECK (month BETWEEN 1 AND 12),
+    change_type VARCHAR(30) NOT NULL CHECK (change_type IN ('launch','cut','resume','frequency_change')),
+    previous_frequency INTEGER,
+    current_frequency INTEGER,
+    frequency_delta INTEGER,
+    significance VARCHAR(20) NOT NULL DEFAULT 'moderate' CHECK (significance IN ('low','moderate','high')),
+    confidence VARCHAR(20) NOT NULL DEFAULT 'low' CHECK (confidence IN ('low','medium','high')),
+    detected_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (route_id, year, month, change_type)
+);
+
+-- Grain: one row per airport + year + month competitiveness profile
+CREATE TABLE IF NOT EXISTS airport_role_metrics (
+    iata CHAR(3) NOT NULL,
+    year SMALLINT NOT NULL,
+    month SMALLINT NOT NULL CHECK (month BETWEEN 1 AND 12),
+    outbound_routes INTEGER NOT NULL CHECK (outbound_routes >= 0),
+    destination_diversity_index NUMERIC(8,4) NOT NULL CHECK (destination_diversity_index >= 0),
+    carrier_concentration_hhi NUMERIC(8,4) NOT NULL CHECK (carrier_concentration_hhi >= 0),
+    dominant_carrier_share NUMERIC(8,4) NOT NULL CHECK (dominant_carrier_share BETWEEN 0 AND 1),
+    role_label VARCHAR(30) NOT NULL,
+    PRIMARY KEY (iata, year, month)
+);
+
+-- Grain: one row per route + year + month competition profile
+CREATE TABLE IF NOT EXISTS route_competition_metrics (
+    route_id BIGINT NOT NULL REFERENCES routes(route_id),
+    route_key TEXT NOT NULL,
+    origin_iata CHAR(3) NOT NULL,
+    destination_iata CHAR(3) NOT NULL,
+    year SMALLINT NOT NULL,
+    month SMALLINT NOT NULL CHECK (month BETWEEN 1 AND 12),
+    active_carriers INTEGER NOT NULL CHECK (active_carriers >= 0),
+    dominant_carrier_share NUMERIC(8,4) NOT NULL CHECK (dominant_carrier_share BETWEEN 0 AND 1),
+    carrier_concentration_hhi NUMERIC(8,3) NOT NULL CHECK (carrier_concentration_hhi >= 0),
+    entrant_count INTEGER NOT NULL DEFAULT 0 CHECK (entrant_count >= 0),
+    exit_count INTEGER NOT NULL DEFAULT 0 CHECK (exit_count >= 0),
+    entrant_pressure_signal VARCHAR(20) NOT NULL,
+    competition_label VARCHAR(20) NOT NULL CHECK (competition_label IN ('monopoly','concentrated','contested','fragmented')),
+    confidence VARCHAR(20) NOT NULL CHECK (confidence IN ('low','medium','high')),
+    flights_observed INTEGER NOT NULL DEFAULT 0 CHECK (flights_observed >= 0),
+    PRIMARY KEY (route_id, year, month)
+);
+
+-- Grain: one row per airport + year + month airport-level competition profile
+CREATE TABLE IF NOT EXISTS airport_competition_metrics (
+    iata CHAR(3) NOT NULL,
+    year SMALLINT NOT NULL,
+    month SMALLINT NOT NULL CHECK (month BETWEEN 1 AND 12),
+    active_outbound_routes INTEGER NOT NULL CHECK (active_outbound_routes >= 0),
+    active_carriers INTEGER NOT NULL CHECK (active_carriers >= 0),
+    dominant_carrier_share NUMERIC(8,4) NOT NULL CHECK (dominant_carrier_share BETWEEN 0 AND 1),
+    carrier_concentration_hhi NUMERIC(8,3) NOT NULL CHECK (carrier_concentration_hhi >= 0),
+    contested_route_count INTEGER NOT NULL DEFAULT 0 CHECK (contested_route_count >= 0),
+    monopoly_route_count INTEGER NOT NULL DEFAULT 0 CHECK (monopoly_route_count >= 0),
+    contested_route_share NUMERIC(8,4) NOT NULL CHECK (contested_route_share BETWEEN 0 AND 1),
+    competition_label VARCHAR(40) NOT NULL,
+    confidence VARCHAR(20) NOT NULL CHECK (confidence IN ('low','medium','high')),
+    flights_observed INTEGER NOT NULL DEFAULT 0 CHECK (flights_observed >= 0),
+    PRIMARY KEY (iata, year, month)
+);
+
 -- =========================
 -- Indexes for product queries
 -- =========================
@@ -116,6 +199,11 @@ CREATE INDEX IF NOT EXISTS idx_airport_enplanements_year ON airport_enplanements
 
 CREATE INDEX IF NOT EXISTS idx_route_scores_period ON route_scores (year, month);
 CREATE INDEX IF NOT EXISTS idx_route_scores_lookup_latest ON route_scores (route_id, year DESC, month DESC);
+CREATE INDEX IF NOT EXISTS idx_schedule_snapshots_route_period ON schedule_snapshots (route_id, year, month);
+CREATE INDEX IF NOT EXISTS idx_route_change_events_period ON route_change_events (year, month, change_type);
+CREATE INDEX IF NOT EXISTS idx_airport_role_metrics_period ON airport_role_metrics (year, month);
+CREATE INDEX IF NOT EXISTS idx_route_comp_metrics_period ON route_competition_metrics (year, month, competition_label);
+CREATE INDEX IF NOT EXISTS idx_airport_comp_metrics_period ON airport_competition_metrics (year, month, competition_label);
 
 -- Optional helper view for route detail pages: latest available score per route
 CREATE OR REPLACE VIEW v_latest_route_scores AS

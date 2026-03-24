@@ -31,6 +31,11 @@ TABLE_FILES = {
     "cancellations": marts_path("cancellations.csv"),
     "route_scores": marts_path("route_scores.csv"),
     "airport_enplanements": raw_path("faa_enplanements_raw.csv"),
+    "schedule_snapshots": marts_path("schedule_snapshots.csv"),
+    "route_change_events": marts_path("route_change_events.csv"),
+    "airport_role_metrics": marts_path("airport_role_metrics.csv"),
+    "route_competition_metrics": marts_path("route_competition_metrics.csv"),
+    "airport_competition_metrics": marts_path("airport_competition_metrics.csv"),
 }
 
 
@@ -82,10 +87,15 @@ def main() -> None:
     cancel_rows = read_csv_rows(TABLE_FILES["cancellations"])
     route_score_rows = read_csv_rows(TABLE_FILES["route_scores"])
     enpl_rows = read_csv_rows(TABLE_FILES["airport_enplanements"])
+    schedule_rows = read_csv_rows(TABLE_FILES["schedule_snapshots"])
+    route_change_rows = read_csv_rows(TABLE_FILES["route_change_events"])
+    airport_role_rows = read_csv_rows(TABLE_FILES["airport_role_metrics"])
+    route_comp_rows = read_csv_rows(TABLE_FILES["route_competition_metrics"])
+    airport_comp_rows = read_csv_rows(TABLE_FILES["airport_competition_metrics"])
 
     airports, airlines, routes = build_dimensions(monthly_rows, ontime_rows, cancel_rows, enpl_rows)
     LOGGER.info(
-        "Prepared entities | airports=%s airlines=%s routes=%s monthly_fares=%s ontime=%s cancellations=%s enplanements=%s scores=%s",
+        "Prepared entities | airports=%s airlines=%s routes=%s monthly_fares=%s ontime=%s cancellations=%s enplanements=%s scores=%s schedule=%s route_changes=%s airport_roles=%s route_comp=%s airport_comp=%s",
         len(airports),
         len(airlines),
         len(routes),
@@ -94,6 +104,11 @@ def main() -> None:
         len(cancel_rows),
         len(enpl_rows),
         len(route_score_rows),
+        len(schedule_rows),
+        len(route_change_rows),
+        len(airport_role_rows),
+        len(route_comp_rows),
+        len(airport_comp_rows),
     )
 
     if args.dry_run or not args.dsn:
@@ -229,6 +244,167 @@ def main() -> None:
                         airport_map[row["airport_iata"]],
                         int(row["year"]),
                         int(row["total_enplanements"]),
+                    ),
+                )
+
+            for row in schedule_rows:
+                o, d = route_parts(row["route_key"])
+                cur.execute(
+                    """
+                    INSERT INTO schedule_snapshots (route_id, airline_id, year, month, flights_scheduled, seats_scheduled)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (route_id, airline_id, year, month)
+                    DO UPDATE SET flights_scheduled = EXCLUDED.flights_scheduled,
+                                  seats_scheduled = EXCLUDED.seats_scheduled
+                    """,
+                    (
+                        route_map[(o, d)],
+                        airline_map[row["carrier_code"]],
+                        int(row["year"]),
+                        int(row["month"]),
+                        int(row["flights_scheduled"]),
+                        int(row["seats_scheduled"]) if row.get("seats_scheduled") else None,
+                    ),
+                )
+
+            for row in route_change_rows:
+                o, d = route_parts(row["route_key"])
+                cur.execute(
+                    """
+                    INSERT INTO route_change_events (
+                        route_id, route_key, origin_iata, destination_iata, dominant_carrier,
+                        year, month, change_type, previous_frequency, current_frequency,
+                        frequency_delta, significance, confidence
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (route_id, year, month, change_type)
+                    DO UPDATE SET previous_frequency = EXCLUDED.previous_frequency,
+                                  current_frequency = EXCLUDED.current_frequency,
+                                  frequency_delta = EXCLUDED.frequency_delta,
+                                  significance = EXCLUDED.significance,
+                                  confidence = EXCLUDED.confidence,
+                                  dominant_carrier = EXCLUDED.dominant_carrier
+                    """,
+                    (
+                        route_map[(o, d)],
+                        row["route_key"],
+                        row["origin_iata"],
+                        row["destination_iata"],
+                        row.get("dominant_carrier") or None,
+                        int(row["year"]),
+                        int(row["month"]),
+                        row["change_type"],
+                        int(row["previous_frequency"]) if row.get("previous_frequency") else None,
+                        int(row["current_frequency"]) if row.get("current_frequency") else None,
+                        int(row["frequency_delta"]) if row.get("frequency_delta") else None,
+                        row.get("significance") or "moderate",
+                        row.get("confidence") or "low",
+                    ),
+                )
+
+            for row in airport_role_rows:
+                cur.execute(
+                    """
+                    INSERT INTO airport_role_metrics (
+                        iata, year, month, outbound_routes, destination_diversity_index,
+                        carrier_concentration_hhi, dominant_carrier_share, role_label
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (iata, year, month)
+                    DO UPDATE SET outbound_routes = EXCLUDED.outbound_routes,
+                                  destination_diversity_index = EXCLUDED.destination_diversity_index,
+                                  carrier_concentration_hhi = EXCLUDED.carrier_concentration_hhi,
+                                  dominant_carrier_share = EXCLUDED.dominant_carrier_share,
+                                  role_label = EXCLUDED.role_label
+                    """,
+                    (
+                        row["iata"],
+                        int(row["year"]),
+                        int(row["month"]),
+                        int(row["outbound_routes"]),
+                        float(row["destination_diversity_index"]),
+                        float(row["carrier_concentration_hhi"]),
+                        float(row["dominant_carrier_share"]),
+                        row["role_label"],
+                    ),
+                )
+
+            for row in route_comp_rows:
+                o, d = route_parts(row["route_key"])
+                cur.execute(
+                    """
+                    INSERT INTO route_competition_metrics (
+                        route_id, route_key, origin_iata, destination_iata, year, month,
+                        active_carriers, dominant_carrier_share, carrier_concentration_hhi,
+                        entrant_count, exit_count, entrant_pressure_signal, competition_label,
+                        confidence, flights_observed
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (route_id, year, month)
+                    DO UPDATE SET active_carriers = EXCLUDED.active_carriers,
+                                  dominant_carrier_share = EXCLUDED.dominant_carrier_share,
+                                  carrier_concentration_hhi = EXCLUDED.carrier_concentration_hhi,
+                                  entrant_count = EXCLUDED.entrant_count,
+                                  exit_count = EXCLUDED.exit_count,
+                                  entrant_pressure_signal = EXCLUDED.entrant_pressure_signal,
+                                  competition_label = EXCLUDED.competition_label,
+                                  confidence = EXCLUDED.confidence,
+                                  flights_observed = EXCLUDED.flights_observed
+                    """,
+                    (
+                        route_map[(o, d)],
+                        row["route_key"],
+                        row["origin_iata"],
+                        row["destination_iata"],
+                        int(row["year"]),
+                        int(row["month"]),
+                        int(row["active_carriers"]),
+                        float(row["dominant_carrier_share"]),
+                        float(row["carrier_concentration_hhi"]),
+                        int(row["entrant_count"]),
+                        int(row["exit_count"]),
+                        row["entrant_pressure_signal"],
+                        row["competition_label"],
+                        row["confidence"],
+                        int(row["flights_observed"]),
+                    ),
+                )
+
+            for row in airport_comp_rows:
+                cur.execute(
+                    """
+                    INSERT INTO airport_competition_metrics (
+                        iata, year, month, active_outbound_routes, active_carriers,
+                        dominant_carrier_share, carrier_concentration_hhi, contested_route_count,
+                        monopoly_route_count, contested_route_share, competition_label, confidence, flights_observed
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (iata, year, month)
+                    DO UPDATE SET active_outbound_routes = EXCLUDED.active_outbound_routes,
+                                  active_carriers = EXCLUDED.active_carriers,
+                                  dominant_carrier_share = EXCLUDED.dominant_carrier_share,
+                                  carrier_concentration_hhi = EXCLUDED.carrier_concentration_hhi,
+                                  contested_route_count = EXCLUDED.contested_route_count,
+                                  monopoly_route_count = EXCLUDED.monopoly_route_count,
+                                  contested_route_share = EXCLUDED.contested_route_share,
+                                  competition_label = EXCLUDED.competition_label,
+                                  confidence = EXCLUDED.confidence,
+                                  flights_observed = EXCLUDED.flights_observed
+                    """,
+                    (
+                        row["iata"],
+                        int(row["year"]),
+                        int(row["month"]),
+                        int(row["active_outbound_routes"]),
+                        int(row["active_carriers"]),
+                        float(row["dominant_carrier_share"]),
+                        float(row["carrier_concentration_hhi"]),
+                        int(row["contested_route_count"]),
+                        int(row["monopoly_route_count"]),
+                        float(row["contested_route_share"]),
+                        row["competition_label"],
+                        row["confidence"],
+                        int(row["flights_observed"]),
                     ),
                 )
 

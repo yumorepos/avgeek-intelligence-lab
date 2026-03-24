@@ -38,6 +38,11 @@ jobs:
           pip install ruff
           ruff check app/
 
+      - name: Compile backend Python modules
+        working-directory: ./backend
+        run: |
+          python -m py_compile app/main.py app/services/analytics.py app/repositories/analytics.py app/api/intelligence.py app/schemas/intelligence.py
+
       - name: Run tests
         working-directory: ./backend
         env:
@@ -109,6 +114,10 @@ jobs:
       - name: Run linting
         working-directory: ./frontend
         run: npm run lint
+
+      - name: Run typecheck
+        working-directory: ./frontend
+        run: npm run typecheck
 
       - name: Build
         working-directory: ./frontend

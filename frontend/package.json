@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
     "test:api-contracts": "node scripts/api-contract-test.mjs",
     "test:e2e": "playwright test -c playwright.config.ts"
   },

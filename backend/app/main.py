@@ -10,6 +10,7 @@ from pydantic import ValidationError
 
 from app.api.airports import router as airports_router
 from app.api.health import router as health_router
+from app.api.intelligence import router as intelligence_router
 from app.api.meta import router as meta_router
 from app.api.routes import router as routes_router
 from app.core.logging_config import LogConfig, setup_logging
@@ -87,6 +88,7 @@ def create_app() -> FastAPI:
     app.include_router(airports_router)
     app.include_router(routes_router)
     app.include_router(meta_router)
+    app.include_router(intelligence_router)
 
     @app.get("/")
     async def root():

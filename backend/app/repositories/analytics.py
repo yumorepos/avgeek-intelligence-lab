@@ -378,3 +378,402 @@ class AnalyticsRepository:
             return None
         airport = search[0] if search else self._airport_from_iata(iata)
         return {"airport": airport, "enplanement": None, "related_routes": explore}
+
+
+    def get_route_changes(
+        self,
+        airport_iata: str | None = None,
+        carrier_code: str | None = None,
+        year: int | None = None,
+        month: int | None = None,
+        change_type: str | None = None,
+        limit: int = 100,
+    ) -> list[dict]:
+        self._guard_data_access()
+
+        if self._use_db():
+            clauses = []
+            params: list[object] = []
+            if airport_iata:
+                clauses.append("(rc.origin_iata = %s OR rc.destination_iata = %s)")
+                params.extend([airport_iata, airport_iata])
+            if carrier_code:
+                clauses.append("COALESCE(rc.dominant_carrier, '') = %s")
+                params.append(carrier_code)
+            if year is not None:
+                clauses.append("rc.year = %s")
+                params.append(year)
+            if month is not None:
+                clauses.append("rc.month = %s")
+                params.append(month)
+            if change_type:
+                clauses.append("rc.change_type = %s")
+                params.append(change_type)
+
+            where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+            params.append(limit)
+
+            return self._db_rows(
+                f"""
+                SELECT
+                    rc.route_key,
+                    rc.origin_iata,
+                    rc.destination_iata,
+                    rc.year,
+                    rc.month,
+                    rc.change_type,
+                    rc.previous_frequency,
+                    rc.current_frequency,
+                    rc.frequency_delta,
+                    rc.dominant_carrier,
+                    rc.confidence,
+                    rc.significance
+                FROM route_change_events rc
+                {where_sql}
+                ORDER BY rc.year DESC, rc.month DESC, ABS(COALESCE(rc.frequency_delta, 0)) DESC
+                LIMIT %s
+                """,
+                tuple(params),
+            )
+
+        rows = self._read_csv("route_change_events.csv")
+        out: list[dict] = []
+        for row in rows:
+            if airport_iata and airport_iata not in (row.get("origin_iata"), row.get("destination_iata")):
+                continue
+            if carrier_code and (row.get("dominant_carrier") or "") != carrier_code:
+                continue
+            if year is not None and int(row.get("year", 0)) != year:
+                continue
+            if month is not None and int(row.get("month", 0)) != month:
+                continue
+            if change_type and row.get("change_type") != change_type:
+                continue
+            out.append(
+                {
+                    "route_key": row.get("route_key"),
+                    "origin_iata": row.get("origin_iata"),
+                    "destination_iata": row.get("destination_iata"),
+                    "year": int(row.get("year", 0)),
+                    "month": int(row.get("month", 0)),
+                    "change_type": row.get("change_type", "frequency_change"),
+                    "previous_frequency": int(row["previous_frequency"]) if row.get("previous_frequency") else None,
+                    "current_frequency": int(row["current_frequency"]) if row.get("current_frequency") else None,
+                    "frequency_delta": int(row["frequency_delta"]) if row.get("frequency_delta") else None,
+                    "dominant_carrier": row.get("dominant_carrier") or None,
+                    "confidence": row.get("confidence", "low"),
+                    "significance": row.get("significance", "moderate"),
+                }
+            )
+
+        out.sort(key=lambda r: (r["year"], r["month"], abs(r["frequency_delta"] or 0)), reverse=True)
+        return out[:limit]
+
+    def get_airport_role_metrics(self, iata: str) -> dict | None:
+        self._guard_data_access()
+
+        if self._use_db():
+            rows = self._db_rows(
+                """
+                SELECT
+                    arm.iata,
+                    arm.year,
+                    arm.month,
+                    arm.outbound_routes,
+                    arm.destination_diversity_index,
+                    arm.carrier_concentration_hhi,
+                    arm.dominant_carrier_share,
+                    arm.role_label
+                FROM airport_role_metrics arm
+                WHERE arm.iata = %s
+                ORDER BY arm.year DESC, arm.month DESC
+                LIMIT 1
+                """,
+                (iata,),
+            )
+            return rows[0] if rows else None
+
+        rows = [r for r in self._read_csv("airport_role_metrics.csv") if r.get("iata") == iata]
+        if not rows:
+            return None
+        latest = max(rows, key=lambda r: (int(r.get("year", 0)), int(r.get("month", 0))))
+        return {
+            "iata": iata,
+            "year": int(latest.get("year", 0)),
+            "month": int(latest.get("month", 0)),
+            "outbound_routes": int(latest.get("outbound_routes", 0)),
+            "destination_diversity_index": float(latest.get("destination_diversity_index", 0.0)),
+            "carrier_concentration_hhi": float(latest.get("carrier_concentration_hhi", 0.0)),
+            "dominant_carrier_share": float(latest.get("dominant_carrier_share", 0.0)),
+            "role_label": latest.get("role_label", "emerging"),
+        }
+
+    def get_airport_peer_metrics(self, iata: str, limit: int = 5) -> list[dict]:
+        self._guard_data_access()
+
+        target = self.get_airport_role_metrics(iata)
+        if target is None:
+            return []
+
+        if self._use_db():
+            return self._db_rows(
+                """
+                WITH latest AS (
+                    SELECT DISTINCT ON (arm.iata)
+                        arm.iata,
+                        arm.year,
+                        arm.month,
+                        arm.outbound_routes,
+                        arm.destination_diversity_index,
+                        arm.dominant_carrier_share,
+                        arm.role_label
+                    FROM airport_role_metrics arm
+                    ORDER BY arm.iata, arm.year DESC, arm.month DESC
+                )
+                SELECT
+                    l.iata,
+                    l.outbound_routes,
+                    l.destination_diversity_index,
+                    l.dominant_carrier_share,
+                    l.role_label
+                FROM latest l
+                WHERE l.iata <> %s
+                ORDER BY ABS(l.outbound_routes - %s), ABS(l.destination_diversity_index - %s)
+                LIMIT %s
+                """,
+                (
+                    iata,
+                    target["outbound_routes"],
+                    target["destination_diversity_index"],
+                    limit,
+                ),
+            )
+
+        rows = self._read_csv("airport_role_metrics.csv")
+        latest: dict[str, dict] = {}
+        for row in rows:
+            code = row.get("iata")
+            if not code or code == iata:
+                continue
+            key = (int(row.get("year", 0)), int(row.get("month", 0)))
+            prev = latest.get(code)
+            if prev is None or key > prev["_period"]:
+                latest[code] = {
+                    "_period": key,
+                    "iata": code,
+                    "outbound_routes": int(row.get("outbound_routes", 0)),
+                    "destination_diversity_index": float(row.get("destination_diversity_index", 0.0)),
+                    "dominant_carrier_share": float(row.get("dominant_carrier_share", 0.0)),
+                    "role_label": row.get("role_label", "emerging"),
+                }
+
+        peers = list(latest.values())
+        peers.sort(
+            key=lambda r: (
+                abs(r["outbound_routes"] - target["outbound_routes"]),
+                abs(r["destination_diversity_index"] - target["destination_diversity_index"]),
+            )
+        )
+        return [{k: v for k, v in row.items() if not k.startswith("_")} for row in peers[:limit]]
+
+
+    def get_route_competition(
+        self,
+        origin_iata: str | None = None,
+        destination_iata: str | None = None,
+        airport_iata: str | None = None,
+        year: int | None = None,
+        month: int | None = None,
+        limit: int = 100,
+    ) -> list[dict]:
+        self._guard_data_access()
+
+        if self._use_db():
+            clauses = []
+            params: list[object] = []
+            if origin_iata:
+                clauses.append("rcm.origin_iata = %s")
+                params.append(origin_iata)
+            if destination_iata:
+                clauses.append("rcm.destination_iata = %s")
+                params.append(destination_iata)
+            if airport_iata:
+                clauses.append("(rcm.origin_iata = %s OR rcm.destination_iata = %s)")
+                params.extend([airport_iata, airport_iata])
+            if year is not None:
+                clauses.append("rcm.year = %s")
+                params.append(year)
+            if month is not None:
+                clauses.append("rcm.month = %s")
+                params.append(month)
+
+            where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+            params.append(limit)
+            return self._db_rows(
+                f"""
+                SELECT route_key, origin_iata, destination_iata, year, month,
+                       active_carriers, dominant_carrier_share, carrier_concentration_hhi,
+                       entrant_count, exit_count, entrant_pressure_signal, competition_label,
+                       confidence, flights_observed
+                FROM route_competition_metrics rcm
+                {where_sql}
+                ORDER BY year DESC, month DESC, flights_observed DESC
+                LIMIT %s
+                """,
+                tuple(params),
+            )
+
+        rows = self._read_csv("route_competition_metrics.csv")
+        out: list[dict] = []
+        for row in rows:
+            if origin_iata and row.get("origin_iata") != origin_iata:
+                continue
+            if destination_iata and row.get("destination_iata") != destination_iata:
+                continue
+            if airport_iata and airport_iata not in (row.get("origin_iata"), row.get("destination_iata")):
+                continue
+            if year is not None and int(row.get("year", 0)) != year:
+                continue
+            if month is not None and int(row.get("month", 0)) != month:
+                continue
+            out.append(
+                {
+                    "route_key": row.get("route_key", ""),
+                    "origin_iata": row.get("origin_iata", ""),
+                    "destination_iata": row.get("destination_iata", ""),
+                    "year": int(row.get("year", 0)),
+                    "month": int(row.get("month", 0)),
+                    "active_carriers": int(row.get("active_carriers", 0)),
+                    "dominant_carrier_share": float(row.get("dominant_carrier_share", 0)),
+                    "carrier_concentration_hhi": float(row.get("carrier_concentration_hhi", 0)),
+                    "entrant_count": int(row.get("entrant_count", 0)),
+                    "exit_count": int(row.get("exit_count", 0)),
+                    "entrant_pressure_signal": row.get("entrant_pressure_signal", "stable"),
+                    "competition_label": row.get("competition_label", "concentrated"),
+                    "confidence": row.get("confidence", "low"),
+                    "flights_observed": int(row.get("flights_observed", 0)),
+                }
+            )
+        out.sort(key=lambda r: (r["year"], r["month"], r["flights_observed"]), reverse=True)
+        return out[:limit]
+
+    def get_airport_competition_metrics(self, iata: str) -> dict | None:
+        self._guard_data_access()
+
+        if self._use_db():
+            rows = self._db_rows(
+                """
+                SELECT iata, year, month, active_outbound_routes, active_carriers,
+                       dominant_carrier_share, carrier_concentration_hhi,
+                       contested_route_count, monopoly_route_count, contested_route_share,
+                       competition_label, confidence, flights_observed
+                FROM airport_competition_metrics
+                WHERE iata = %s
+                ORDER BY year DESC, month DESC
+                LIMIT 1
+                """,
+                (iata,),
+            )
+            return rows[0] if rows else None
+
+        rows = [r for r in self._read_csv("airport_competition_metrics.csv") if r.get("iata") == iata]
+        if not rows:
+            return None
+        latest = max(rows, key=lambda r: (int(r.get("year", 0)), int(r.get("month", 0))))
+        return {
+            "iata": iata,
+            "year": int(latest.get("year", 0)),
+            "month": int(latest.get("month", 0)),
+            "active_outbound_routes": int(latest.get("active_outbound_routes", 0)),
+            "active_carriers": int(latest.get("active_carriers", 0)),
+            "dominant_carrier_share": float(latest.get("dominant_carrier_share", 0.0)),
+            "carrier_concentration_hhi": float(latest.get("carrier_concentration_hhi", 0.0)),
+            "contested_route_count": int(latest.get("contested_route_count", 0)),
+            "monopoly_route_count": int(latest.get("monopoly_route_count", 0)),
+            "contested_route_share": float(latest.get("contested_route_share", 0.0)),
+            "competition_label": latest.get("competition_label", "highly_concentrated"),
+            "confidence": latest.get("confidence", "low"),
+            "flights_observed": int(latest.get("flights_observed", 0)),
+        }
+
+
+    def get_route_competition_history(self, route_key: str, periods: int = 6) -> list[dict]:
+        self._guard_data_access()
+        if self._use_db():
+            return self._db_rows(
+                """
+                SELECT route_key, origin_iata, destination_iata, year, month,
+                       active_carriers, dominant_carrier_share, carrier_concentration_hhi,
+                       entrant_count, exit_count, entrant_pressure_signal, competition_label,
+                       confidence, flights_observed
+                FROM route_competition_metrics
+                WHERE route_key = %s
+                ORDER BY year DESC, month DESC
+                LIMIT %s
+                """,
+                (route_key, periods),
+            )
+
+        rows = [r for r in self._read_csv("route_competition_metrics.csv") if r.get("route_key") == route_key]
+        parsed = []
+        for row in rows:
+            parsed.append(
+                {
+                    "route_key": row.get("route_key", ""),
+                    "origin_iata": row.get("origin_iata", ""),
+                    "destination_iata": row.get("destination_iata", ""),
+                    "year": int(row.get("year", 0)),
+                    "month": int(row.get("month", 0)),
+                    "active_carriers": int(row.get("active_carriers", 0)),
+                    "dominant_carrier_share": float(row.get("dominant_carrier_share", 0)),
+                    "carrier_concentration_hhi": float(row.get("carrier_concentration_hhi", 0)),
+                    "entrant_count": int(row.get("entrant_count", 0)),
+                    "exit_count": int(row.get("exit_count", 0)),
+                    "entrant_pressure_signal": row.get("entrant_pressure_signal", "stable"),
+                    "competition_label": row.get("competition_label", "concentrated"),
+                    "confidence": row.get("confidence", "low"),
+                    "flights_observed": int(row.get("flights_observed", 0)),
+                }
+            )
+        parsed.sort(key=lambda r: (r["year"], r["month"]), reverse=True)
+        return parsed[:periods]
+
+    def get_airport_competition_history(self, iata: str, periods: int = 6) -> list[dict]:
+        self._guard_data_access()
+        if self._use_db():
+            return self._db_rows(
+                """
+                SELECT iata, year, month, active_outbound_routes, active_carriers,
+                       dominant_carrier_share, carrier_concentration_hhi,
+                       contested_route_count, monopoly_route_count, contested_route_share,
+                       competition_label, confidence, flights_observed
+                FROM airport_competition_metrics
+                WHERE iata = %s
+                ORDER BY year DESC, month DESC
+                LIMIT %s
+                """,
+                (iata, periods),
+            )
+
+        rows = [r for r in self._read_csv("airport_competition_metrics.csv") if r.get("iata") == iata]
+        parsed = []
+        for row in rows:
+            parsed.append(
+                {
+                    "iata": row.get("iata", ""),
+                    "year": int(row.get("year", 0)),
+                    "month": int(row.get("month", 0)),
+                    "active_outbound_routes": int(row.get("active_outbound_routes", 0)),
+                    "active_carriers": int(row.get("active_carriers", 0)),
+                    "dominant_carrier_share": float(row.get("dominant_carrier_share", 0)),
+                    "carrier_concentration_hhi": float(row.get("carrier_concentration_hhi", 0)),
+                    "contested_route_count": int(row.get("contested_route_count", 0)),
+                    "monopoly_route_count": int(row.get("monopoly_route_count", 0)),
+                    "contested_route_share": float(row.get("contested_route_share", 0)),
+                    "competition_label": row.get("competition_label", "highly_concentrated"),
+                    "confidence": row.get("confidence", "low"),
+                    "flights_observed": int(row.get("flights_observed", 0)),
+                }
+            )
+        parsed.sort(key=lambda r: (r["year"], r["month"]), reverse=True)
+        return parsed[:periods]

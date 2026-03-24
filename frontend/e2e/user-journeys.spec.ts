@@ -25,3 +25,14 @@ test("network journey: geospatial route map renders", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Geospatial route map" })).toBeVisible();
   await expect(page.locator("svg")).toBeVisible();
 });
+
+test("flagship wedge route changes page is backend-dependent and truth-labeled", async ({ page }) => {
+  await page.goto("/intelligence/route-changes");
+  await expect(page.getByRole("heading", { name: "Route change intelligence" })).toBeVisible();
+  await expect(page.getByText(/Backend-supported event feed/i)).toBeVisible();
+});
+
+test("competition intelligence page renders truthful heading", async ({ page }) => {
+  await page.goto("/intelligence/competition");
+  await expect(page.getByRole("heading", { name: "Route and airport competition metrics" })).toBeVisible();
+});

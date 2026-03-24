@@ -42,6 +42,11 @@ export default function NetworkPage() {
         <h1>Geospatial route map</h1>
         <p>Current demo route graph rendered from route-level origin/destination data.</p>
       </section>
+      <section className="panel">
+        <p className="status">
+          Demo-only surface: this module currently uses frontend mock API routes, not backend intelligence endpoints.
+        </p>
+      </section>
 
       {error ? <p className="status error">Network error: {error}</p> : null}
 

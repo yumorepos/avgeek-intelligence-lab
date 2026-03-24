@@ -161,6 +161,196 @@ export type MethodologyResponse = {
   metadata?: DataProvenance;
 };
 
+export type RouteChangesResponse = {
+  filters: Record<string, string | number | null>;
+  events: {
+    route_key: string;
+    origin_iata: string;
+    destination_iata: string;
+    year: number;
+    month: number;
+    change_type: "launch" | "cut" | "resume" | "frequency_change" | string;
+    previous_frequency: number | null;
+    current_frequency: number | null;
+    frequency_delta: number | null;
+    dominant_carrier: string | null;
+    confidence: "low" | "medium" | "high" | string;
+    significance: "low" | "moderate" | "high" | string;
+  }[];
+  metadata: DataProvenance;
+  intelligence_meta: {
+    methodology_version: string;
+    coverage_summary: string;
+  };
+};
+
+export type AirportRoleResponse = {
+  airport: Airport;
+  metrics: {
+    iata: string;
+    year: number;
+    month: number;
+    outbound_routes: number;
+    destination_diversity_index: number;
+    carrier_concentration_hhi: number;
+    dominant_carrier_share: number;
+    role_label: string;
+  } | null;
+  metadata: DataProvenance;
+  intelligence_meta: {
+    methodology_version: string;
+    coverage_summary: string;
+  };
+};
+
+export type AirportPeersResponse = {
+  airport: Airport;
+  peers: {
+    iata: string;
+    outbound_routes: number | null;
+    destination_diversity_index: number | null;
+    dominant_carrier_share: number | null;
+    role_label: string | null;
+  }[];
+  comparison_basis: string;
+  metadata: DataProvenance;
+  intelligence_meta: {
+    methodology_version: string;
+    coverage_summary: string;
+  };
+};
+
+export type RouteCompetitionResponse = {
+  filters: Record<string, string | number | null>;
+  rows: {
+    route_key: string;
+    origin_iata: string;
+    destination_iata: string;
+    year: number;
+    month: number;
+    active_carriers: number;
+    dominant_carrier_share: number;
+    carrier_concentration_hhi: number;
+    entrant_count: number;
+    exit_count: number;
+    entrant_pressure_signal: string;
+    competition_label: string;
+    confidence: string;
+    flights_observed: number;
+  }[];
+  metadata: DataProvenance;
+  intelligence_meta: {
+    methodology_version: string;
+    coverage_summary: string;
+  };
+};
+
+export type AirportCompetitionResponse = {
+  airport: Airport;
+  metrics: {
+    iata: string;
+    year: number;
+    month: number;
+    active_outbound_routes: number;
+    active_carriers: number;
+    dominant_carrier_share: number;
+    carrier_concentration_hhi: number;
+    contested_route_count: number;
+    monopoly_route_count: number;
+    contested_route_share: number;
+    competition_label: string;
+    confidence: string;
+    flights_observed: number;
+  } | null;
+  metadata: DataProvenance;
+  intelligence_meta: {
+    methodology_version: string;
+    coverage_summary: string;
+  };
+};
+
+export type RouteInsightsResponse = {
+  filters: Record<string, string | number | null>;
+  insights: {
+    route_key: string;
+    origin_iata: string;
+    destination_iata: string;
+    year: number;
+    month: number;
+    insight_label: string;
+    explanation: string;
+    confidence: string;
+    prior_period_year: number | null;
+    prior_period_month: number | null;
+    trigger_deltas: Record<string, string | number>;
+    metrics_snapshot: { values: Record<string, string | number | null> };
+    methodology_version: string;
+  }[];
+  generated_count: number;
+  suppressed_low_confidence_count: number;
+  confidence_distribution: Record<string, number>;
+  metadata: DataProvenance;
+  intelligence_meta: {
+    methodology_version: string;
+    coverage_summary: string;
+  };
+};
+
+export type AirportInsightsResponse = {
+  airport: Airport;
+  insights: {
+    iata: string;
+    year: number;
+    month: number;
+    insight_label: string;
+    explanation: string;
+    confidence: string;
+    prior_period_year: number | null;
+    prior_period_month: number | null;
+    trigger_deltas: Record<string, string | number>;
+    metrics_snapshot: { values: Record<string, string | number | null> };
+    methodology_version: string;
+  }[];
+  generated_count: number;
+  suppressed_low_confidence_count: number;
+  confidence_distribution: Record<string, number>;
+  metadata: DataProvenance;
+  intelligence_meta: {
+    methodology_version: string;
+    coverage_summary: string;
+  };
+};
+
+export type InsightQualityResponse = {
+  methodology_version: string;
+  thresholds: Record<string, number>;
+  total_insights_generated: number;
+  suppressed_low_confidence_count: number;
+  suppressed_rate_pct: number;
+  label_distribution: Record<string, number>;
+  confidence_distribution: Record<string, number>;
+  data_coverage_stats: Record<string, number>;
+};
+
+export type RouteInsightTimelineResponse = {
+  route_key: string;
+  points: {
+    year: number;
+    month: number;
+    carrier_concentration_hhi: number;
+    active_carriers: number;
+    dominant_carrier_share: number;
+    entrant_count: number;
+    exit_count: number;
+    inferred_label: string | null;
+  }[];
+  metadata: DataProvenance;
+  intelligence_meta: {
+    methodology_version: string;
+    coverage_summary: string;
+  };
+};
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
 
 function withApiHint(detail: string): string {
@@ -234,4 +424,80 @@ export function getNetworkGeo(): Promise<NetworkGeoResponse> {
 
 export function getAirlineDetail(carrier: string): Promise<AirlineDetailResponse> {
   return apiFetch(`/airlines/${encodeURIComponent(carrier)}/detail`);
+}
+
+export function getRouteChanges(params: {
+  airport_iata?: string;
+  carrier_code?: string;
+  year?: number;
+  month?: number;
+  change_type?: string;
+  limit?: number;
+}): Promise<RouteChangesResponse> {
+  const q = new URLSearchParams();
+  if (params.airport_iata) q.set("airport_iata", params.airport_iata);
+  if (params.carrier_code) q.set("carrier_code", params.carrier_code);
+  if (params.year) q.set("year", String(params.year));
+  if (params.month) q.set("month", String(params.month));
+  if (params.change_type) q.set("change_type", params.change_type);
+  if (params.limit) q.set("limit", String(params.limit));
+  return apiFetch(`/intelligence/routes/changes?${q.toString()}`);
+}
+
+export function getAirportRole(iata: string): Promise<AirportRoleResponse> {
+  return apiFetch(`/intelligence/airports/${encodeURIComponent(iata)}/role`);
+}
+
+export function getAirportPeers(iata: string, limit = 5): Promise<AirportPeersResponse> {
+  return apiFetch(`/intelligence/airports/${encodeURIComponent(iata)}/peers?limit=${limit}`);
+}
+
+export function getRouteCompetition(params: {
+  origin_iata?: string;
+  destination_iata?: string;
+  airport_iata?: string;
+  year?: number;
+  month?: number;
+  limit?: number;
+}): Promise<RouteCompetitionResponse> {
+  const q = new URLSearchParams();
+  if (params.origin_iata) q.set("origin_iata", params.origin_iata);
+  if (params.destination_iata) q.set("destination_iata", params.destination_iata);
+  if (params.airport_iata) q.set("airport_iata", params.airport_iata);
+  if (params.year) q.set("year", String(params.year));
+  if (params.month) q.set("month", String(params.month));
+  if (params.limit) q.set("limit", String(params.limit));
+  return apiFetch(`/intelligence/routes/competition?${q.toString()}`);
+}
+
+export function getAirportCompetition(iata: string): Promise<AirportCompetitionResponse> {
+  return apiFetch(`/intelligence/airports/${encodeURIComponent(iata)}/competition`);
+}
+
+export function getRouteInsights(params: {
+  airport_iata?: string;
+  origin_iata?: string;
+  destination_iata?: string;
+  limit?: number;
+}): Promise<RouteInsightsResponse> {
+  const q = new URLSearchParams();
+  if (params.airport_iata) q.set("airport_iata", params.airport_iata);
+  if (params.origin_iata) q.set("origin_iata", params.origin_iata);
+  if (params.destination_iata) q.set("destination_iata", params.destination_iata);
+  if (params.limit) q.set("limit", String(params.limit));
+  return apiFetch(`/intelligence/routes/insights?${q.toString()}`);
+}
+
+export function getAirportInsights(iata: string): Promise<AirportInsightsResponse> {
+  return apiFetch(`/intelligence/airports/${encodeURIComponent(iata)}/insights`);
+}
+
+export function getInsightQuality(): Promise<InsightQualityResponse> {
+  return apiFetch("/meta/insight-quality");
+}
+
+export function getRouteInsightTimeline(origin: string, destination: string, periods = 12): Promise<RouteInsightTimelineResponse> {
+  return apiFetch(
+    `/intelligence/routes/${encodeURIComponent(origin)}/${encodeURIComponent(destination)}/insight-timeline?periods=${periods}`,
+  );
 }
