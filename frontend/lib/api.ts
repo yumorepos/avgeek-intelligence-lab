@@ -357,6 +357,49 @@ function withApiHint(detail: string): string {
   return `${detail} Verify the backend is running and reachable (default: http://localhost:8000).`;
 }
 
+function formatErrorDetail(detail: unknown, fallback: string): string {
+  if (detail === null || detail === undefined) {
+    return "No additional error details were provided by the API.";
+  }
+
+  if (typeof detail === "string" && detail.trim().length > 0) {
+    return detail;
+  }
+
+  if (typeof detail === "number" || typeof detail === "boolean") {
+    return String(detail);
+  }
+
+  if (Array.isArray(detail)) {
+    const joined = detail
+      .map((entry) => formatErrorDetail(entry, ""))
+      .filter((entry) => entry.length > 0)
+      .join("; ");
+    if (joined.length > 0) {
+      return joined;
+    }
+  }
+
+  if (detail && typeof detail === "object") {
+    const record = detail as Record<string, unknown>;
+    const nested = record.detail ?? record.message ?? record.error;
+    if (nested !== undefined && nested !== detail) {
+      const nestedFormatted = formatErrorDetail(nested, "");
+      if (nestedFormatted.length > 0) {
+        return nestedFormatted;
+      }
+    }
+
+    try {
+      return JSON.stringify(detail);
+    } catch {
+      return fallback;
+    }
+  }
+
+  return fallback;
+}
+
 async function apiFetch<T>(path: string): Promise<T> {
   let response: Response;
 
@@ -371,8 +414,8 @@ async function apiFetch<T>(path: string): Promise<T> {
     let detail = fallbackError;
 
     try {
-      const body = (await response.json()) as { detail?: string };
-      detail = body.detail ?? fallbackError;
+      const body = (await response.json()) as { detail?: unknown; message?: unknown; error?: unknown };
+      detail = formatErrorDetail(body.detail ?? body.message ?? body.error ?? body, fallbackError);
     } catch {
       detail = fallbackError;
     }

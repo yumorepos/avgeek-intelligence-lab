@@ -78,17 +78,21 @@ export default function AirportRoleIntelPage() {
         <section className="panel">
           <h2>Peer airports</h2>
           <p className="muted">{peers.comparison_basis}</p>
-          <div className="route-grid mt-4">
-            {peers.peers.map((peer) => (
-              <article className="route-card" key={peer.iata}>
-                <h3>{peer.iata}</h3>
-                <p>Role: {peer.role_label ?? "N/A"}</p>
-                <p>Outbound routes: {peer.outbound_routes ?? "N/A"}</p>
-                <p>Diversity index: {peer.destination_diversity_index?.toFixed(3) ?? "N/A"}</p>
-                <p>Dominant carrier share: {peer.dominant_carrier_share !== null && peer.dominant_carrier_share !== undefined ? formatPercent(peer.dominant_carrier_share) : "N/A"}</p>
-              </article>
-            ))}
-          </div>
+          {peers.peers.length > 0 ? (
+            <div className="route-grid mt-4">
+              {peers.peers.map((peer) => (
+                <article className="route-card" key={peer.iata}>
+                  <h3>{peer.iata}</h3>
+                  <p>Role: {peer.role_label ?? "N/A"}</p>
+                  <p>Outbound routes: {peer.outbound_routes ?? "N/A"}</p>
+                  <p>Diversity index: {peer.destination_diversity_index?.toFixed(3) ?? "N/A"}</p>
+                  <p>Dominant carrier share: {peer.dominant_carrier_share !== null && peer.dominant_carrier_share !== undefined ? formatPercent(peer.dominant_carrier_share) : "N/A"}</p>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="muted mt-4">No peer airport records available for this airport in loaded data.</p>
+          )}
         </section>
       ) : null}
     </main>

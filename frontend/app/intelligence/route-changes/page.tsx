@@ -74,32 +74,36 @@ export default function RouteChangesPage() {
 
           <section className="panel">
             <h2>Event feed</h2>
-            <div className="mt-4 overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-orange-200">
-                    <th className="py-2">Period</th>
-                    <th className="py-2">Route</th>
-                    <th className="py-2">Change</th>
-                    <th className="py-2">Δ Frequency</th>
-                    <th className="py-2">Carrier</th>
-                    <th className="py-2">Confidence</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.events.map((event, idx) => (
-                    <tr key={`${event.route_key}-${event.year}-${event.month}-${event.change_type}-${idx}`} className="border-b border-gray-100">
-                      <td className="py-2">{formatMonth(event.year, event.month)}</td>
-                      <td className="py-2 font-semibold">{event.route_key}</td>
-                      <td className="py-2">{event.change_type}</td>
-                      <td className="py-2">{event.frequency_delta ?? "N/A"}</td>
-                      <td className="py-2">{event.dominant_carrier ?? "N/A"}</td>
-                      <td className="py-2">{event.confidence}</td>
+            {data.events.length > 0 ? (
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-orange-200">
+                      <th className="py-2">Period</th>
+                      <th className="py-2">Route</th>
+                      <th className="py-2">Change</th>
+                      <th className="py-2">Δ Frequency</th>
+                      <th className="py-2">Carrier</th>
+                      <th className="py-2">Confidence</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {data.events.map((event, idx) => (
+                      <tr key={`${event.route_key}-${event.year}-${event.month}-${event.change_type}-${idx}`} className="border-b border-gray-100">
+                        <td className="py-2">{formatMonth(event.year, event.month)}</td>
+                        <td className="py-2 font-semibold">{event.route_key}</td>
+                        <td className="py-2">{event.change_type}</td>
+                        <td className="py-2">{event.frequency_delta ?? "N/A"}</td>
+                        <td className="py-2">{event.dominant_carrier ?? "N/A"}</td>
+                        <td className="py-2">{event.confidence}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="muted mt-4">No route change records found for the selected filters.</p>
+            )}
           </section>
         </>
       ) : null}

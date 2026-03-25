@@ -132,34 +132,38 @@ export default function CompetitionIntelPage() {
         <section className="panel">
           <h2>Route competition rows</h2>
           <p className="muted">{routeData.intelligence_meta.coverage_summary}</p>
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-orange-200">
-                  <th className="py-2">Route</th>
-                  <th className="py-2">Active carriers</th>
-                  <th className="py-2">Dominant share</th>
-                  <th className="py-2">HHI</th>
-                  <th className="py-2">Entrant signal</th>
-                  <th className="py-2">Label</th>
-                  <th className="py-2">Confidence</th>
-                </tr>
-              </thead>
-              <tbody>
-                {routeData.rows.map((row) => (
-                  <tr key={`${row.route_key}-${row.year}-${row.month}`} className="border-b border-gray-100">
-                    <td className="py-2 font-semibold">{row.route_key}</td>
-                    <td className="py-2">{row.active_carriers}</td>
-                    <td className="py-2">{formatPercent(row.dominant_carrier_share)}</td>
-                    <td className="py-2">{row.carrier_concentration_hhi.toFixed(1)}</td>
-                    <td className="py-2">{row.entrant_pressure_signal}</td>
-                    <td className="py-2">{row.competition_label}</td>
-                    <td className="py-2">{row.confidence}</td>
+          {routeData.rows.length > 0 ? (
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-orange-200">
+                    <th className="py-2">Route</th>
+                    <th className="py-2">Active carriers</th>
+                    <th className="py-2">Dominant share</th>
+                    <th className="py-2">HHI</th>
+                    <th className="py-2">Entrant signal</th>
+                    <th className="py-2">Label</th>
+                    <th className="py-2">Confidence</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {routeData.rows.map((row) => (
+                    <tr key={`${row.route_key}-${row.year}-${row.month}`} className="border-b border-gray-100">
+                      <td className="py-2 font-semibold">{row.route_key}</td>
+                      <td className="py-2">{row.active_carriers}</td>
+                      <td className="py-2">{formatPercent(row.dominant_carrier_share)}</td>
+                      <td className="py-2">{row.carrier_concentration_hhi.toFixed(1)}</td>
+                      <td className="py-2">{row.entrant_pressure_signal}</td>
+                      <td className="py-2">{row.competition_label}</td>
+                      <td className="py-2">{row.confidence}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="muted mt-4">No route competition records found for the selected filter.</p>
+          )}
         </section>
       ) : null}
 
