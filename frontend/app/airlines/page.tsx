@@ -44,22 +44,22 @@ export default function AirlinesPage() {
           <section className="panel">
             <h2>Airline overview</h2>
             <div className="mt-6 overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <table className="data-table">
                 <thead>
-                  <tr className="border-b border-orange-200">
-                    <th className="py-3">Carrier</th>
-                    <th className="py-3">Routes</th>
-                    <th className="py-3">Avg route score</th>
-                    <th className="py-3">Avg on-time</th>
+                  <tr>
+                    <th>Carrier</th>
+                    <th>Routes</th>
+                    <th>Avg route score</th>
+                    <th>Avg on-time</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.airlines.map((airline) => (
-                    <tr key={airline.carrier_code} className="border-b border-gray-100">
-                      <td className="py-3 font-semibold"><Link href={`/airlines/${airline.carrier_code}`} className="text-orange-700 hover:underline">{airline.carrier_code} · {airline.airline_name}</Link></td>
-                      <td className="py-3">{airline.route_count}</td>
-                      <td className="py-3">{airline.avg_route_score}</td>
-                      <td className="py-3">{formatPercent(airline.avg_ontime_rate)}</td>
+                    <tr key={airline.carrier_code}>
+                      <td className="font-semibold"><Link href={`/airlines/${airline.carrier_code}`} className="text-orange-700 hover:underline">{airline.carrier_code} · {airline.airline_name}</Link></td>
+                      <td>{airline.route_count}</td>
+                      <td>{airline.avg_route_score}</td>
+                      <td>{formatPercent(airline.avg_ontime_rate)}</td>
                     </tr>
                   ))}
                 </tbody>

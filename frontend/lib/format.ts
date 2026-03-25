@@ -27,3 +27,10 @@ export function formatMonth(year: number, month: number): string {
     timeZone: "UTC",
   });
 }
+
+export function formatSystemLabel(value: string | null | undefined): string {
+  if (!value) return "Not available";
+  return value
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}

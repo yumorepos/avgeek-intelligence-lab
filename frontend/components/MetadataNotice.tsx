@@ -17,7 +17,7 @@ export function MetadataNotice({ metadata }: Props) {
         <span className={`chip ${metadata.is_fallback ? "chip-warning" : ""}`}>{metadata.is_fallback ? "Fallback mode" : "Primary mode"}</span>
         <span className={`chip ${!metadata.data_complete ? "chip-warning" : ""}`}>{metadata.data_complete ? "Coverage: complete" : "Coverage: partial"}</span>
       </div>
-      <p className="muted">Use this as directional route intelligence. In fallback mode, coverage can be thinner by route/month.</p>
+      <p className="muted">Use this as directional intelligence; fallback mode can have thinner route/month coverage.</p>
       {metadata.note ? <p className="muted">{metadata.note}</p> : null}
       {metadata.last_refreshed_at ? <p className="muted">Last refreshed: {new Date(metadata.last_refreshed_at).toLocaleString()}</p> : null}
     </section>

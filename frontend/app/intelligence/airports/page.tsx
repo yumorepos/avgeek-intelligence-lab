@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { MetadataNotice } from "@/components/MetadataNotice";
 import { AirportPeersResponse, AirportRoleResponse, getAirportPeers, getAirportRole } from "@/lib/api";
-import { formatPercent } from "@/lib/format";
+import { formatPercent, formatSystemLabel } from "@/lib/format";
 import { resolveIntelligenceAirportDefaults } from "@/lib/airport-defaults";
 
 export default function AirportRoleIntelPage() {
@@ -47,15 +47,15 @@ export default function AirportRoleIntelPage() {
 
   const why = useMemo(() => {
     if (!role?.metrics) return "No role metrics available for this airport in loaded data.";
-    return `${role.airport.iata} is currently labeled ${role.metrics.role_label}, with ${role.metrics.outbound_routes} outbound routes and ${formatPercent(role.metrics.dominant_carrier_share)} dominant carrier share.`;
+    return `${role.airport.iata} is currently classified as ${formatSystemLabel(role.metrics.role_label)}, with ${role.metrics.outbound_routes} outbound routes and ${formatPercent(role.metrics.dominant_carrier_share)} dominant carrier share.`;
   }, [role]);
 
   return (
     <main className="page-shell">
       <section className="hero">
-        <p className="eyebrow">Flagship Wedge · Airport Competitiveness</p>
+        <p className="eyebrow">Airport intelligence</p>
         <h1>Airport role and peer intelligence</h1>
-        <p>Backend-supported airport positioning profile with closest peers from latest role snapshots.</p>
+        <p>Backend-supported airport positioning profiles and nearest peers from the latest role snapshots.</p>
       </section>
 
       <section className="panel">
@@ -105,13 +105,27 @@ export default function AirportRoleIntelPage() {
           <section className="panel">
             <h2>Role metrics</h2>
             {role.metrics ? (
-              <dl className="kv-grid mt-4">
-                <div><dt>Role label</dt><dd>{role.metrics.role_label}</dd></div>
-                <div><dt>Outbound routes</dt><dd>{role.metrics.outbound_routes}</dd></div>
-                <div><dt>Destination diversity index</dt><dd>{role.metrics.destination_diversity_index.toFixed(3)}</dd></div>
-                <div><dt>Carrier concentration HHI</dt><dd>{role.metrics.carrier_concentration_hhi.toFixed(1)}</dd></div>
-                <div><dt>Dominant carrier share</dt><dd>{formatPercent(role.metrics.dominant_carrier_share)}</dd></div>
-              </dl>
+              <>
+                <div className="stats-grid">
+                  <article className="stat-card">
+                    <p className="stat-label">Role class</p>
+                    <p className="stat-value">{formatSystemLabel(role.metrics.role_label)}</p>
+                  </article>
+                  <article className="stat-card">
+                    <p className="stat-label">Outbound routes</p>
+                    <p className="stat-value">{role.metrics.outbound_routes}</p>
+                  </article>
+                  <article className="stat-card">
+                    <p className="stat-label">Dominant carrier share</p>
+                    <p className="stat-value">{formatPercent(role.metrics.dominant_carrier_share)}</p>
+                  </article>
+                </div>
+                <dl className="kv-grid mt-4">
+                  <div><dt>Destination diversity index</dt><dd>{role.metrics.destination_diversity_index.toFixed(3)}</dd></div>
+                  <div><dt>Carrier concentration (HHI)</dt><dd>{role.metrics.carrier_concentration_hhi.toFixed(1)}</dd></div>
+                  <div><dt>Raw role label</dt><dd>{role.metrics.role_label}</dd></div>
+                </dl>
+              </>
             ) : (
               <p className="muted">No role metrics for current airport.</p>
             )}
@@ -128,10 +142,11 @@ export default function AirportRoleIntelPage() {
               {peers.peers.map((peer) => (
                 <article className="route-card" key={peer.iata}>
                   <h3>{peer.iata}</h3>
-                  <p>Role: {peer.role_label ?? "N/A"}</p>
+                  <p>Role: {formatSystemLabel(peer.role_label)}</p>
                   <p>Outbound routes: {peer.outbound_routes ?? "N/A"}</p>
                   <p>Diversity index: {peer.destination_diversity_index?.toFixed(3) ?? "N/A"}</p>
                   <p>Dominant carrier share: {peer.dominant_carrier_share !== null && peer.dominant_carrier_share !== undefined ? formatPercent(peer.dominant_carrier_share) : "N/A"}</p>
+                  {peer.role_label ? <p className="muted">Raw label: {peer.role_label}</p> : null}
                 </article>
               ))}
             </div>

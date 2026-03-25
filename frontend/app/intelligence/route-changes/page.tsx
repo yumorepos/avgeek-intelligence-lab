@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { MetadataNotice } from "@/components/MetadataNotice";
 import { RouteChangesResponse, getRouteChanges } from "@/lib/api";
-import { formatMonth } from "@/lib/format";
+import { formatMonth, formatSystemLabel } from "@/lib/format";
 
 export default function RouteChangesPage() {
   const [airport, setAirport] = useState("JFK");
@@ -42,7 +42,7 @@ export default function RouteChangesPage() {
   return (
     <main className="page-shell">
       <section className="hero">
-        <p className="eyebrow">Flagship Wedge · Route Competitiveness</p>
+        <p className="eyebrow">Route intelligence</p>
         <h1>Route change intelligence</h1>
         <p>Backend-supported event feed for launches, cuts, resumptions, and significant frequency moves.</p>
       </section>
@@ -70,32 +70,46 @@ export default function RouteChangesPage() {
             <h2>Why this matters</h2>
             <p>{whyThisMatters}</p>
             <p className="muted mt-2">{data.intelligence_meta.coverage_summary}</p>
+            <div className="stats-grid">
+              <article className="stat-card">
+                <p className="stat-label">Launch events</p>
+                <p className="stat-value">{data.events.filter((event) => event.change_type === "launch").length}</p>
+              </article>
+              <article className="stat-card">
+                <p className="stat-label">Cut events</p>
+                <p className="stat-value">{data.events.filter((event) => event.change_type === "cut").length}</p>
+              </article>
+              <article className="stat-card">
+                <p className="stat-label">Frequency changes</p>
+                <p className="stat-value">{data.events.filter((event) => event.change_type === "frequency_change").length}</p>
+              </article>
+            </div>
           </section>
 
           <section className="panel">
             <h2>Event feed</h2>
             {data.events.length > 0 ? (
               <div className="mt-4 overflow-x-auto">
-                <table className="w-full text-left text-sm">
+                <table className="data-table">
                   <thead>
-                    <tr className="border-b border-orange-200">
-                      <th className="py-2">Period</th>
-                      <th className="py-2">Route</th>
-                      <th className="py-2">Change</th>
-                      <th className="py-2">Δ Frequency</th>
-                      <th className="py-2">Carrier</th>
-                      <th className="py-2">Confidence</th>
+                    <tr>
+                      <th>Period</th>
+                      <th>Route</th>
+                      <th>Change</th>
+                      <th>Δ Frequency</th>
+                      <th>Carrier</th>
+                      <th>Confidence</th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.events.map((event, idx) => (
-                      <tr key={`${event.route_key}-${event.year}-${event.month}-${event.change_type}-${idx}`} className="border-b border-gray-100">
-                        <td className="py-2">{formatMonth(event.year, event.month)}</td>
-                        <td className="py-2 font-semibold">{event.route_key}</td>
-                        <td className="py-2">{event.change_type}</td>
-                        <td className="py-2">{event.frequency_delta ?? "N/A"}</td>
-                        <td className="py-2">{event.dominant_carrier ?? "N/A"}</td>
-                        <td className="py-2">{event.confidence}</td>
+                      <tr key={`${event.route_key}-${event.year}-${event.month}-${event.change_type}-${idx}`}>
+                        <td>{formatMonth(event.year, event.month)}</td>
+                        <td className="font-semibold">{event.route_key}</td>
+                        <td>{formatSystemLabel(event.change_type)}</td>
+                        <td>{event.frequency_delta ?? "N/A"}</td>
+                        <td>{event.dominant_carrier ?? "N/A"}</td>
+                        <td>{event.confidence}</td>
                       </tr>
                     ))}
                   </tbody>

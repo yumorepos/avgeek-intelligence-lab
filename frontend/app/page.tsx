@@ -11,19 +11,19 @@ import { AirportSearchResponse, RouteExploreResponse, exploreRoutes, searchAirpo
 const MODULES = [
   {
     href: "/intelligence/route-changes",
-    title: "Route Changes Intelligence",
+    title: "Routes",
     desc: "Launch, cut, resume, and frequency-shift events with confidence tagging.",
     status: "Backend-supported",
   },
   {
     href: "/intelligence/airports",
-    title: "Airport Role Intelligence",
+    title: "Airports",
     desc: "Role labels, concentration, diversity, and peer comparison from latest snapshots.",
     status: "Backend-supported",
   },
   {
     href: "/intelligence/competition",
-    title: "Competition Intelligence",
+    title: "Competition",
     desc: "Route + airport concentration and entrant-pressure diagnostics with trust controls.",
     status: "Backend-supported",
   },
@@ -41,7 +41,7 @@ const MODULES = [
   },
   {
     href: "/airlines",
-    title: "Airline Intelligence",
+    title: "Airlines",
     desc: "Carrier footprint and trends currently powered by demo data only.",
     status: "Demo-only",
   },
@@ -53,7 +53,7 @@ const MODULES = [
   },
   {
     href: "/seasonality",
-    title: "Seasonality Explorer",
+    title: "Seasonality",
     desc: "Monthly seasonality index currently powered by demo data only.",
     status: "Demo-only",
   },
@@ -132,8 +132,8 @@ export default function HomePage() {
         <p className="eyebrow">Truth-first intelligence for avgeeks</p>
         <h1>Avgeek Intelligence Lab</h1>
         <p>
-          This product separates backend-supported intelligence from demo-only modules, and exposes methodology, freshness,
-          and data limitations on every core workflow.
+          This product separates backend-supported intelligence from demo-only modules while exposing methodology, freshness,
+          and coverage limits on core workflows.
         </p>
       </section>
 

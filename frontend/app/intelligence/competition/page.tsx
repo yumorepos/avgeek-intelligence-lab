@@ -15,7 +15,7 @@ import {
   getRouteInsights,
   getInsightQuality,
 } from "@/lib/api";
-import { formatPercent } from "@/lib/format";
+import { formatPercent, formatSystemLabel } from "@/lib/format";
 import { resolveIntelligenceAirportDefaults } from "@/lib/airport-defaults";
 
 export default function CompetitionIntelPage() {
@@ -73,7 +73,7 @@ export default function CompetitionIntelPage() {
 
   const why = useMemo(() => {
     if (!airportData?.metrics) return "No airport competition metrics for current filter.";
-    return `${airportData.airport.iata} is ${airportData.metrics.competition_label} with ${airportData.metrics.active_carriers} active carriers and ${formatPercent(airportData.metrics.dominant_carrier_share)} dominant share in current slice.`;
+    return `${airportData.airport.iata} is currently ${formatSystemLabel(airportData.metrics.competition_label)} with ${airportData.metrics.active_carriers} active carriers and ${formatPercent(airportData.metrics.dominant_carrier_share)} dominant share in the current slice.`;
   }, [airportData]);
 
   return (
@@ -81,7 +81,7 @@ export default function CompetitionIntelPage() {
       <section className="hero">
         <p className="eyebrow">Carrier Competition Intelligence</p>
         <h1>Route and airport competition metrics</h1>
-        <p>Backend-first concentration metrics with entrant pressure signals, confidence, and coverage caveats.</p>
+        <p>Backend-first concentration metrics with entrant pressure signals, confidence, and coverage context.</p>
       </section>
 
       <section className="panel">
@@ -132,13 +132,24 @@ export default function CompetitionIntelPage() {
       {quality ? (
         <section className="panel">
           <h2>Trust layer</h2>
-          <p>
-            Total generated insights: {quality.total_insights_generated}. Suppressed low confidence: {quality.suppressed_low_confidence_count} (
-            {quality.suppressed_rate_pct.toFixed(1)}%).
-          </p>
-          <p className="muted mt-2">
-            Coverage rows: {quality.data_coverage_stats.route_competition_rows}. Confidence distribution: high{" "}
-            {quality.confidence_distribution.high ?? 0}, medium {quality.confidence_distribution.medium ?? 0}, low{" "}
+          <div className="stats-grid">
+            <article className="stat-card">
+              <p className="stat-label">Generated insights</p>
+              <p className="stat-value">{quality.total_insights_generated}</p>
+            </article>
+            <article className="stat-card">
+              <p className="stat-label">Suppressed (low confidence)</p>
+              <p className="stat-value">{quality.suppressed_low_confidence_count}</p>
+              <p className="stat-detail">{quality.suppressed_rate_pct.toFixed(1)}% of total</p>
+            </article>
+            <article className="stat-card">
+              <p className="stat-label">Coverage rows</p>
+              <p className="stat-value">{quality.data_coverage_stats.route_competition_rows}</p>
+              <p className="stat-detail">Route competition rows in this run</p>
+            </article>
+          </div>
+          <p className="muted mt-3">
+            Confidence distribution: high {quality.confidence_distribution.high ?? 0}, medium {quality.confidence_distribution.medium ?? 0}, low{" "}
             {quality.confidence_distribution.low ?? 0}.
           </p>
         </section>
@@ -151,7 +162,7 @@ export default function CompetitionIntelPage() {
             <div className="route-grid mt-4">
               {airportInsights.insights.map((insight, idx) => (
                 <article className="route-card" key={`${insight.insight_label}-${idx}`}>
-                  <h3>{insight.insight_label}</h3>
+                  <h3>{formatSystemLabel(insight.insight_label)}</h3>
                   <p>{insight.explanation}</p>
                   <p className="muted">Confidence: {insight.confidence}</p>
                 </article>
@@ -167,14 +178,28 @@ export default function CompetitionIntelPage() {
         <section className="panel">
           <h2>Airport competition profile</h2>
           {airportData.metrics ? (
-            <dl className="kv-grid mt-4">
-              <div><dt>Label</dt><dd>{airportData.metrics.competition_label}</dd></div>
-              <div><dt>Active carriers</dt><dd>{airportData.metrics.active_carriers}</dd></div>
-              <div><dt>Dominant share</dt><dd>{formatPercent(airportData.metrics.dominant_carrier_share)}</dd></div>
-              <div><dt>Concentration HHI</dt><dd>{airportData.metrics.carrier_concentration_hhi.toFixed(1)}</dd></div>
-              <div><dt>Contested route share</dt><dd>{formatPercent(airportData.metrics.contested_route_share)}</dd></div>
-              <div><dt>Confidence</dt><dd>{airportData.metrics.confidence}</dd></div>
-            </dl>
+            <>
+              <div className="stats-grid">
+                <article className="stat-card">
+                  <p className="stat-label">Competition class</p>
+                  <p className="stat-value">{formatSystemLabel(airportData.metrics.competition_label)}</p>
+                </article>
+                <article className="stat-card">
+                  <p className="stat-label">Active carriers</p>
+                  <p className="stat-value">{airportData.metrics.active_carriers}</p>
+                </article>
+                <article className="stat-card">
+                  <p className="stat-label">Dominant share</p>
+                  <p className="stat-value">{formatPercent(airportData.metrics.dominant_carrier_share)}</p>
+                </article>
+              </div>
+              <dl className="kv-grid mt-4">
+                <div><dt>Concentration HHI</dt><dd>{airportData.metrics.carrier_concentration_hhi.toFixed(1)}</dd></div>
+                <div><dt>Contested route share</dt><dd>{formatPercent(airportData.metrics.contested_route_share)}</dd></div>
+                <div><dt>Confidence</dt><dd>{airportData.metrics.confidence}</dd></div>
+                <div><dt>Raw label</dt><dd>{airportData.metrics.competition_label}</dd></div>
+              </dl>
+            </>
           ) : (
             <p className="muted mt-4">Airport found, but airport-level competition metrics are unavailable for the loaded slice.</p>
           )}
@@ -187,28 +212,28 @@ export default function CompetitionIntelPage() {
           <p className="muted">{routeData.intelligence_meta.coverage_summary}</p>
           {routeData.rows.length > 0 ? (
             <div className="mt-4 overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <table className="data-table">
                 <thead>
-                  <tr className="border-b border-orange-200">
-                    <th className="py-2">Route</th>
-                    <th className="py-2">Active carriers</th>
-                    <th className="py-2">Dominant share</th>
-                    <th className="py-2">HHI</th>
-                    <th className="py-2">Entrant signal</th>
-                    <th className="py-2">Label</th>
-                    <th className="py-2">Confidence</th>
+                  <tr>
+                    <th>Route</th>
+                    <th>Active carriers</th>
+                    <th>Dominant share</th>
+                    <th>HHI</th>
+                    <th>Entrant signal</th>
+                    <th>Label</th>
+                    <th>Confidence</th>
                   </tr>
                 </thead>
                 <tbody>
                   {routeData.rows.map((row) => (
-                    <tr key={`${row.route_key}-${row.year}-${row.month}`} className="border-b border-gray-100">
-                      <td className="py-2 font-semibold">{row.route_key}</td>
-                      <td className="py-2">{row.active_carriers}</td>
-                      <td className="py-2">{formatPercent(row.dominant_carrier_share)}</td>
-                      <td className="py-2">{row.carrier_concentration_hhi.toFixed(1)}</td>
-                      <td className="py-2">{row.entrant_pressure_signal}</td>
-                      <td className="py-2">{row.competition_label}</td>
-                      <td className="py-2">{row.confidence}</td>
+                    <tr key={`${row.route_key}-${row.year}-${row.month}`}>
+                      <td className="font-semibold">{row.route_key}</td>
+                      <td>{row.active_carriers}</td>
+                      <td>{formatPercent(row.dominant_carrier_share)}</td>
+                      <td>{row.carrier_concentration_hhi.toFixed(1)}</td>
+                      <td>{row.entrant_pressure_signal}</td>
+                      <td>{formatSystemLabel(row.competition_label)}</td>
+                      <td>{row.confidence}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -238,7 +263,7 @@ export default function CompetitionIntelPage() {
             {routeInsights.insights.map((insight, idx) => (
               <article className="route-card" key={`${insight.route_key}-${insight.insight_label}-${idx}`}>
                 <h3>
-                  {insight.route_key} · {insight.insight_label}
+                  {insight.route_key} · {formatSystemLabel(insight.insight_label)}
                 </h3>
                 <p>{insight.explanation}</p>
                 <p className="muted">Confidence: {insight.confidence}</p>

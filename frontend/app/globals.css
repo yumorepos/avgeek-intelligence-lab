@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-gradient-to-br from-orange-50 to-amber-50 text-gray-900 antialiased;
+    @apply bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100/60 text-gray-900 antialiased;
   }
   
   h1 {
@@ -23,12 +23,12 @@
 @layer components {
   /* Layout */
   .page-shell {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8;
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10;
   }
 
   /* Hero Section */
   .hero {
-    @apply text-center mb-12 py-12 px-6 bg-gradient-to-r from-orange-500 to-amber-600 text-white rounded-2xl shadow-xl;
+    @apply text-center mb-8 md:mb-10 py-10 px-6 bg-gradient-to-r from-orange-500 to-amber-600 text-white rounded-2xl shadow-xl;
   }
   
   .hero h1 {
@@ -45,11 +45,11 @@
 
   /* Panels */
   .panel {
-    @apply bg-white rounded-2xl shadow-lg p-8 mb-8 border border-orange-100;
+    @apply bg-white/95 rounded-2xl shadow-md p-6 md:p-8 mb-6 md:mb-8 border border-orange-100;
   }
 
   .panel-header {
-    @apply mb-6 border-b-2 border-orange-200 pb-4;
+    @apply mb-5 border-b border-orange-200 pb-4;
   }
   
   .panel-header h2 {
@@ -71,6 +71,26 @@
 
   .route-grid {
     @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8;
+  }
+
+  .stats-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4;
+  }
+
+  .stat-card {
+    @apply rounded-xl border border-orange-200 bg-gradient-to-b from-orange-50 to-white px-4 py-4;
+  }
+
+  .stat-label {
+    @apply text-xs uppercase tracking-wide text-gray-500 font-semibold;
+  }
+
+  .stat-value {
+    @apply mt-2 text-2xl font-bold text-gray-900;
+  }
+
+  .stat-detail {
+    @apply mt-1 text-sm text-gray-600;
   }
 
   /* Route Cards */
@@ -151,6 +171,10 @@
     @apply text-gray-600 text-sm leading-relaxed;
   }
 
+  .subheading {
+    @apply text-sm text-gray-500 mt-1;
+  }
+
   /* Buttons */
   .btn {
     @apply px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg inline-flex items-center gap-2;
@@ -209,11 +233,79 @@
   }
   
   .airport-button {
-    @apply p-4 text-left bg-white border-2 border-orange-300 rounded-xl hover:border-orange-500 hover:bg-orange-50 transition-all duration-200 font-semibold;
+    @apply p-3 text-left bg-white border border-orange-200 rounded-xl hover:border-orange-500 hover:bg-orange-50 transition-all duration-200 font-semibold text-sm;
   }
   
   .airport-button.selected {
-    @apply border-orange-600 bg-orange-50 ring-4 ring-orange-100;
+    @apply border-orange-600 bg-orange-50 ring-2 ring-orange-100;
+  }
+
+  .airport-input {
+    @apply w-full sm:w-40 px-4 py-2.5 text-sm uppercase tracking-wide border border-orange-300 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-500;
+  }
+
+  .airport-select {
+    @apply w-full sm:w-56 px-4 py-2.5 text-sm border border-orange-300 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-500;
+  }
+
+  .kv-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3;
+  }
+
+  .kv-grid > div {
+    @apply rounded-xl border border-orange-100 bg-orange-50/50 p-4;
+  }
+
+  .kv-grid dt {
+    @apply text-xs uppercase tracking-wide text-gray-500 font-semibold;
+  }
+
+  .kv-grid dd {
+    @apply mt-1 text-lg font-semibold text-gray-900 break-words;
+  }
+
+  .notice {
+    @apply rounded-xl border p-4 md:p-5 mb-6;
+  }
+
+  .notice-warning {
+    @apply bg-amber-50/80 border-amber-200;
+  }
+
+  .provenance-meta {
+    @apply flex flex-wrap gap-2 mt-3 mb-3;
+  }
+
+  .chip {
+    @apply inline-flex items-center rounded-full bg-white border border-orange-200 px-3 py-1 text-xs font-medium text-gray-700;
+  }
+
+  .chip-warning {
+    @apply border-amber-300 bg-amber-100 text-amber-800;
+  }
+
+  .data-table {
+    @apply w-full text-left text-sm;
+  }
+
+  .data-table thead tr {
+    @apply border-b border-orange-200 bg-orange-50/60;
+  }
+
+  .data-table th {
+    @apply py-2.5 px-2 font-semibold text-gray-700;
+  }
+
+  .data-table td {
+    @apply py-2.5 px-2 text-gray-700;
+  }
+
+  .data-table tbody tr {
+    @apply border-b border-gray-100;
+  }
+
+  .soft-label {
+    @apply inline-flex items-center rounded-md bg-orange-100 text-orange-800 px-2 py-0.5 text-xs font-semibold;
   }
 
   /* Loading States */
