@@ -51,5 +51,5 @@ test("flagship wedge route changes page is backend-dependent and truth-labeled",
 test("competition intelligence page reuses airport insight experience", async ({ page }) => {
   await page.goto("/intelligence/competition");
   await expect(page).toHaveURL(/\/intelligence\/competition$/);
-  await expect(page.getByRole("heading", { name: /Airport insight engine/i })).toBeVisible();
+  await expect(page.getByTestId("airport-intelligence-page")).toBeVisible();
 });

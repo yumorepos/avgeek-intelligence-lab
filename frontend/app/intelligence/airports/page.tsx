@@ -345,7 +345,7 @@ export default function AirportInsightsPage() {
   }, [reliabilityTrend]);
 
   return (
-    <main className="page-shell">
+    <main className="page-shell" data-testid="airport-intelligence-page">
       <section className="hero">
         <p className="eyebrow">Airport intelligence</p>
         <h1>Decision-ready airport brief</h1>
