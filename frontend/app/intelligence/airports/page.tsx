@@ -25,7 +25,7 @@ type CarrierShare = { carrier: string; share: number; routeCount: number };
 
 type RouteMatterCard = {
   title: string;
-  routeKey: string;
+  routeLabel: string;
   explanation: string;
   metric: string;
 };
@@ -49,7 +49,8 @@ function computeImportanceScore(input: {
 }
 
 function classifyAirportScale(score: number): string {
-  if (score >= 67) return "Major hub";
+  if (score >= 78) return "Major hub";
+  if (score >= 58) return "Large airport";
   if (score >= 34) return "Mid-size airport";
   return "Small airport";
 }
@@ -154,14 +155,19 @@ export default function AirportInsightsPage() {
     const connectivity = role?.metrics?.destination_diversity_index ?? null;
     const score = computeImportanceScore({ flightsObserved, routes, carriers, connectivity });
     return {
-      score,
       label: classifyAirportScale(score),
       flightsObserved,
       routes,
       carriers,
-      connectivity,
     };
   }, [competition, role]);
+
+  const airportScaleHeadline = useMemo(() => {
+    const flights = airportImportance.flightsObserved ?? 0;
+    const routes = airportImportance.routes ?? 0;
+    const carriers = airportImportance.carriers ?? 0;
+    return `${iata} is a ${airportImportance.label.toLowerCase()} handling about ${flights.toLocaleString()} monthly flights across ${routes} routes served by ${carriers} airlines.`;
+  }, [airportImportance, iata]);
 
   const dominantMessage = useMemo(() => {
     const share = competition?.metrics?.dominant_carrier_share;
@@ -191,6 +197,13 @@ export default function AirportInsightsPage() {
     return {
       headline: `${classifyMarket(share)}. Leading carrier controls ${formatPercent(share)} of observed outbound traffic.`,
       topCarriers,
+      topCarrierSummary:
+        topCarriers.length > 0
+          ? `${topCarriers[0].carrier} dominates (${formatPercent(share)} share), followed by ${topCarriers
+              .slice(1)
+              .map((carrier) => carrier.carrier)
+              .join(" and ") || "other carriers"}.`
+          : `One carrier controls ${formatPercent(share)} of observed outbound traffic.`,
     };
   }, [competition, routeChanges]);
 
@@ -215,21 +228,21 @@ export default function AirportInsightsPage() {
     return [
       {
         title: "Busiest route",
-        routeKey: busiest.route_key,
+        routeLabel: busiest.route_key.replace("-", "–"),
         metric: `${busiest.flights_observed} flights observed`,
-        explanation: "This route carries the most activity and is the clearest demand anchor for this airport.",
+        explanation: "Drives the largest share of airport demand and is the first route to watch for volume shifts.",
       },
       {
         title: "Most competitive route",
-        routeKey: mostCompetitive.route_key,
+        routeLabel: mostCompetitive.route_key.replace("-", "–"),
         metric: `${mostCompetitive.active_carriers} airlines, top share ${formatPercent(mostCompetitive.dominant_carrier_share)}`,
-        explanation: "This market has the strongest head-to-head airline competition in the latest period.",
+        explanation: "Multiple airlines are competing head-to-head, which puts pressure on pricing power.",
       },
       {
         title: "Highest fare route",
-        routeKey: fares[0]?.routeKey ?? "N/A",
+        routeLabel: fares[0]?.routeKey.replace("-", "–") ?? "N/A",
         metric: fares[0] ? formatCurrency(fares[0].fare) : "Insufficient fare history",
-        explanation: "This is where pricing pressure is highest across the most important tracked routes.",
+        explanation: "This route shows the strongest pricing power and highest fare pressure in the tracked set.",
       },
     ];
   }, [routeRows, routeDetails]);
@@ -259,16 +272,16 @@ export default function AirportInsightsPage() {
     };
   }, [routeChanges]);
 
-  const keyInsight = useMemo(() => {
+  const whyThisAirportMatters = useMemo(() => {
     if (!competition?.metrics) return "No high-confidence insight available yet for this airport.";
     const contestedShare = competition.metrics.contested_route_share;
     if (competition.metrics.dominant_carrier_share >= 0.65) {
-      return `One airline controls ${formatPercent(competition.metrics.dominant_carrier_share)} of outbound traffic, which limits competitive pressure on fares.`;
+      return `One airline clearly dominates this airport, controlling ${formatPercent(competition.metrics.dominant_carrier_share)} of outbound traffic.`;
     }
     if (contestedShare >= 0.45) {
-      return `Nearly ${formatPercent(contestedShare)} of routes are contested, indicating strong competition and healthier pricing pressure.`;
+      return "This is a highly competitive airport with no single airline in full control of the market.";
     }
-    return `The airport is in a mixed state: ${formatPercent(contestedShare)} of routes are contested, so competition exists but is not broad.`;
+    return "This is a key coverage airport with meaningful demand, but competition is still concentrated on several routes.";
   }, [competition]);
 
   const fareTrend = useMemo(() => {
@@ -375,38 +388,19 @@ export default function AirportInsightsPage() {
       {competition?.metrics || role?.metrics ? (
         <>
           <section className="panel">
-            <h2>At-a-glance</h2>
-            <div className="stats-grid mt-4">
-              <article className="stat-card">
-                <p className="stat-label">Airport importance</p>
-                <p className="stat-value">{airportImportance.score}/100</p>
-                <p className="stat-detail">{airportImportance.label}</p>
-              </article>
-              <article className="stat-card">
-                <p className="stat-label">Airline dominance</p>
-                <p className="stat-value">{formatPercent(competition?.metrics?.dominant_carrier_share)}</p>
-                <p className="stat-detail">Top carrier share of outbound traffic</p>
-              </article>
-              <article className="stat-card">
-                <p className="stat-label">Key insight</p>
-                <p className="stat-detail">{keyInsight}</p>
-              </article>
-            </div>
-          </section>
-
-          <section className="panel">
-            <h2>Airport scale and network footprint</h2>
-            <p>
-              {iata} is a <strong>{airportImportance.label}</strong> ({airportImportance.score}/100). Based on {airportImportance.flightsObserved ?? 0} observed flights,
-              {" "}
-              {airportImportance.routes ?? 0} destinations served, {airportImportance.carriers ?? 0} active airlines, and connectivity index {airportImportance.connectivity?.toFixed(2) ?? "N/A"}.
-            </p>
+            <h2>Airport scale</h2>
+            <p>{airportScaleHeadline}</p>
             <p className="mt-2 muted">Snapshot period: {latestPeriodLabel}</p>
           </section>
 
           <section className="panel">
+            <h2>Why this airport matters</h2>
+            <p>{whyThisAirportMatters}</p>
+          </section>
+
+          <section className="panel">
             <h2>Who dominates this airport</h2>
-            <p>{dominantMessage?.headline ?? "Dominance signal is unavailable in this data slice."}</p>
+            <p>{dominantMessage?.topCarrierSummary ?? dominantMessage?.headline ?? "Dominance signal is unavailable in this data slice."}</p>
             {dominantMessage?.topCarriers?.length ? (
               <div className="route-grid mt-4">
                 {dominantMessage.topCarriers.map((carrier) => (
@@ -426,7 +420,7 @@ export default function AirportInsightsPage() {
               {topRoutes.map((route) => (
                 <article className="route-card" key={route.title}>
                   <h3>{route.title}</h3>
-                  <p className="font-semibold">{route.routeKey}</p>
+                  <p className="font-semibold">{route.routeLabel}</p>
                   <p>{route.metric}</p>
                   <p className="muted">{route.explanation}</p>
                 </article>
