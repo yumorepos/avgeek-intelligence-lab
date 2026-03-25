@@ -358,8 +358,16 @@ function withApiHint(detail: string): string {
 }
 
 function formatErrorDetail(detail: unknown, fallback: string): string {
+  if (detail === null || detail === undefined) {
+    return "No additional error details were provided by the API.";
+  }
+
   if (typeof detail === "string" && detail.trim().length > 0) {
     return detail;
+  }
+
+  if (typeof detail === "number" || typeof detail === "boolean") {
+    return String(detail);
   }
 
   if (Array.isArray(detail)) {

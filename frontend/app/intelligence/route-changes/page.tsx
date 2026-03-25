@@ -102,7 +102,7 @@ export default function RouteChangesPage() {
                 </table>
               </div>
             ) : (
-              <p className="muted mt-4">No route change events found for the selected filters.</p>
+              <p className="muted mt-4">No route change records found for the selected filters.</p>
             )}
           </section>
         </>

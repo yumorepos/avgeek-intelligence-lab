@@ -162,7 +162,7 @@ export default function CompetitionIntelPage() {
               </table>
             </div>
           ) : (
-            <p className="muted mt-4">No route competition rows found for the selected filter.</p>
+            <p className="muted mt-4">No route competition records found for the selected filter.</p>
           )}
         </section>
       ) : null}

@@ -91,7 +91,7 @@ export default function AirportRoleIntelPage() {
               ))}
             </div>
           ) : (
-            <p className="muted mt-4">No peer airports available for this airport in loaded data.</p>
+            <p className="muted mt-4">No peer airport records available for this airport in loaded data.</p>
           )}
         </section>
       ) : null}
