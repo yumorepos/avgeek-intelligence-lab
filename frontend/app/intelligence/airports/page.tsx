@@ -272,16 +272,24 @@ export default function AirportInsightsPage() {
     };
   }, [routeChanges]);
 
+  const trendDirection = useMemo(() => {
+    if (!routeChangesSummary) return "No movement detected";
+    const net = routeChangesSummary.launched + routeChangesSummary.resumes - routeChangesSummary.cuts;
+    if (net > 0) return "Expanding network footprint";
+    if (net < 0) return "Contracting network footprint";
+    return "Stable network footprint";
+  }, [routeChangesSummary]);
+
   const whyThisAirportMatters = useMemo(() => {
     if (!competition?.metrics) return "No high-confidence insight available yet for this airport.";
     const contestedShare = competition.metrics.contested_route_share;
     if (competition.metrics.dominant_carrier_share >= 0.65) {
-      return `One airline clearly dominates this airport, controlling ${formatPercent(competition.metrics.dominant_carrier_share)} of outbound traffic.`;
+      return `One airline controls ${formatPercent(competition.metrics.dominant_carrier_share)} of outbound traffic, giving it disproportionate influence over capacity and pricing. Any schedule move by the leader can rapidly shift airport-wide demand and yield performance.`;
     }
     if (contestedShare >= 0.45) {
-      return "This is a highly competitive airport with no single airline in full control of the market.";
+      return "This airport is structurally competitive with meaningful overlap across airlines, which creates faster fare responses and more volatile share shifts when new capacity appears.";
     }
-    return "This is a key coverage airport with meaningful demand, but competition is still concentrated on several routes.";
+    return "This airport combines meaningful demand with concentrated competitive pressure on a subset of core routes, making targeted route decisions more important than broad network expansion.";
   }, [competition]);
 
   const fareTrend = useMemo(() => {
@@ -350,6 +358,26 @@ export default function AirportInsightsPage() {
         <p className="eyebrow">Airport intelligence</p>
         <h1>Decision-ready airport brief</h1>
         <p>See airport scale, airline dominance, route priorities, and what is changing in one scan.</p>
+        {competition?.metrics || role?.metrics ? (
+          <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-3 text-left">
+            <article className="rounded-xl bg-white/20 border border-white/30 px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-orange-100">Airport</p>
+              <p className="mt-1 text-2xl font-extrabold">{iata || "—"}</p>
+            </article>
+            <article className="rounded-xl bg-white/20 border border-white/30 px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-orange-100">Scale</p>
+              <p className="mt-1 text-2xl font-extrabold">{airportImportance.label}</p>
+            </article>
+            <article className="rounded-xl bg-white/20 border border-white/30 px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-orange-100">Flights</p>
+              <p className="mt-1 text-2xl font-extrabold">{(airportImportance.flightsObserved ?? 0).toLocaleString()}</p>
+            </article>
+            <article className="rounded-xl bg-white/20 border border-white/30 px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-orange-100">Top carrier share</p>
+              <p className="mt-1 text-2xl font-extrabold">{formatPercent(competition?.metrics?.dominant_carrier_share ?? 0)}</p>
+            </article>
+          </div>
+        ) : null}
       </section>
 
       <section className="panel">
@@ -388,44 +416,59 @@ export default function AirportInsightsPage() {
       {competition?.metrics || role?.metrics ? (
         <>
           <section className="panel">
-            <h2>Airport scale</h2>
-            <p>{airportScaleHeadline}</p>
-            <p className="mt-2 muted">Snapshot period: {latestPeriodLabel}</p>
+            <h2>At a glance</h2>
+            <div className="stats-grid">
+              <article className="stat-card">
+                <p className="stat-label">Airport scale</p>
+                <p className="stat-value">{airportImportance.label}</p>
+                <p className="stat-detail">{iata} snapshot: {latestPeriodLabel}</p>
+              </article>
+              <article className="stat-card">
+                <p className="stat-label">Dominance type</p>
+                <p className="stat-value">{classifyMarket(competition?.metrics?.dominant_carrier_share)}</p>
+                <p className="stat-detail">Top share: {formatPercent(competition?.metrics?.dominant_carrier_share ?? 0)}</p>
+              </article>
+              <article className="stat-card">
+                <p className="stat-label">Trend direction</p>
+                <p className="stat-value">{trendDirection}</p>
+                <p className="stat-detail">
+                  {routeChangesSummary
+                    ? `${routeChangesSummary.launched} launches • ${routeChangesSummary.cuts} cuts • ${routeChangesSummary.resumes} resumes`
+                    : "Route-change feed unavailable"}
+                </p>
+              </article>
+            </div>
+            <p className="mt-4">
+              <strong>Key insight:</strong>{" "}
+              {airportScaleHeadline}
+            </p>
           </section>
 
           <section className="panel">
             <h2>Why this airport matters</h2>
-            <p>{whyThisAirportMatters}</p>
+            <p className="text-base leading-7">{whyThisAirportMatters}</p>
           </section>
 
           <section className="panel">
             <h2>Who dominates this airport</h2>
-            <p>{dominantMessage?.topCarrierSummary ?? dominantMessage?.headline ?? "Dominance signal is unavailable in this data slice."}</p>
+            <p className="mb-4">{dominantMessage?.headline ?? "Dominance signal is unavailable in this data slice."}</p>
             {dominantMessage?.topCarriers?.length ? (
-              <div className="route-grid mt-4">
-                {dominantMessage.topCarriers.map((carrier) => (
-                  <article className="route-card" key={carrier.carrier}>
-                    <h3>{carrier.carrier}</h3>
-                    <p>{formatPercent(carrier.share)} of observed route-dominance signals</p>
-                    <p className="muted">{carrier.routeCount} routes with current carrier signal</p>
-                  </article>
+              <ol className="space-y-3">
+                {dominantMessage.topCarriers.map((carrier, idx) => (
+                  <li
+                    key={carrier.carrier}
+                    className={`rounded-xl border px-4 py-3 flex items-center justify-between gap-4 ${idx === 0 ? "border-orange-500 bg-orange-50" : "border-orange-200 bg-white"}`}
+                  >
+                    <div>
+                      <p className="text-xs uppercase text-gray-500">#{idx + 1} carrier</p>
+                      <p className={`font-semibold ${idx === 0 ? "text-xl text-orange-700" : "text-lg text-gray-900"}`}>{carrier.carrier}</p>
+                      <p className="muted">{carrier.routeCount} routes with dominance signal</p>
+                    </div>
+                    <p className={`font-extrabold ${idx === 0 ? "text-3xl text-orange-700" : "text-2xl text-gray-900"}`}>{formatPercent(carrier.share)}</p>
+                  </li>
                 ))}
-              </div>
+              </ol>
             ) : null}
-          </section>
-
-          <section className="panel">
-            <h2>Top routes that matter</h2>
-            <div className="route-grid mt-4">
-              {topRoutes.map((route) => (
-                <article className="route-card" key={route.title}>
-                  <h3>{route.title}</h3>
-                  <p className="font-semibold">{route.routeLabel}</p>
-                  <p>{route.metric}</p>
-                  <p className="muted">{route.explanation}</p>
-                </article>
-              ))}
-            </div>
           </section>
 
           <section className="panel">
@@ -450,8 +493,23 @@ export default function AirportInsightsPage() {
           </section>
 
           <section className="panel">
-            <h2>Fare trend</h2>
-            <p className="mb-3">{fareNarrative}</p>
+            <h2>Top routes that matter</h2>
+            <div className="route-grid mt-4">
+              {topRoutes.map((route) => (
+                <article className="route-card" key={route.title}>
+                  <h3>{route.title}</h3>
+                  <p className="font-semibold text-xl">{route.routeLabel}</p>
+                  <p className="font-semibold">{route.metric}</p>
+                  <p className="muted">{route.explanation}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="panel">
+            <h2>Pricing pressure signal</h2>
+            <p className="mb-2 text-lg font-semibold">{fareNarrative}</p>
+            <p className="muted mb-4">Chart is supporting evidence across the highest-traffic routes.</p>
             <EnhancedLineChart
               title="Average fare on high-traffic routes"
               points={fareTrend}
@@ -464,8 +522,9 @@ export default function AirportInsightsPage() {
 
           {reliabilityTrend.filter((point) => point.value !== null).length >= 3 && reliabilityNarrative ? (
             <section className="panel">
-              <h2>Reliability trend</h2>
-              <p className="mb-3">{reliabilityNarrative}</p>
+              <h2>Operational reliability signal</h2>
+              <p className="mb-2 text-lg font-semibold">{reliabilityNarrative}</p>
+              <p className="muted mb-4">Use this as secondary context for schedule risk and customer experience.</p>
               <EnhancedLineChart
                 title="On-time performance on high-traffic routes"
                 points={reliabilityTrend}
