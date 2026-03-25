@@ -14,6 +14,8 @@ type Props = {
   color?: string;
   valueFormatter?: (value: number) => string;
   showTrend?: boolean;
+  xAxisLabel?: string;
+  yAxisLabel?: string;
 };
 
 export function EnhancedLineChart({ 
@@ -21,7 +23,9 @@ export function EnhancedLineChart({
   points, 
   color = '#3b82f6',
   valueFormatter = (v) => `$${v.toFixed(0)}`,
-  showTrend = true 
+  showTrend = true,
+  xAxisLabel,
+  yAxisLabel,
 }: Props) {
   // Filter valid points
   const validPoints = points.filter(p => p.value !== null);
@@ -85,6 +89,17 @@ export function EnhancedLineChart({
             tick={{ fontSize: 12 }}
             tickFormatter={valueFormatter}
             stroke="#6b7280"
+            label={
+              yAxisLabel
+                ? {
+                    value: yAxisLabel,
+                    angle: -90,
+                    position: "insideLeft",
+                    offset: 4,
+                    style: { fill: "#6b7280", fontSize: 11 },
+                  }
+                : undefined
+            }
           />
           <Tooltip 
             formatter={(value: any) => valueFormatter(value)}
@@ -106,6 +121,7 @@ export function EnhancedLineChart({
           />
         </LineChart>
       </ResponsiveContainer>
+      {xAxisLabel ? <p className="mt-2 text-xs text-gray-500 text-center">{xAxisLabel}</p> : null}
 
       <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
         <span>{points[0]?.label}</span>
