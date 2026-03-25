@@ -16,7 +16,7 @@ import {
   getInsightQuality,
 } from "@/lib/api";
 import { formatPercent } from "@/lib/format";
-import { resolveAirportDefaults } from "@/lib/airport-defaults";
+import { resolveIntelligenceAirportDefaults } from "@/lib/airport-defaults";
 
 export default function CompetitionIntelPage() {
   const [airport, setAirport] = useState("");
@@ -25,18 +25,24 @@ export default function CompetitionIntelPage() {
   const [routeInsights, setRouteInsights] = useState<RouteInsightsResponse | null>(null);
   const [airportInsights, setAirportInsights] = useState<AirportInsightsResponse | null>(null);
   const [quality, setQuality] = useState<InsightQualityResponse | null>(null);
+  const [supportedAirports, setSupportedAirports] = useState<string[]>([]);
+  const [readinessMessage, setReadinessMessage] = useState<string | null>(null);
+  const [bootstrapComplete, setBootstrapComplete] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const bootstrap = async () => {
-      const defaults = await resolveAirportDefaults(5, { requireIntelligenceAirport: true });
-      setAirport(defaults.defaultAirport);
+      const defaults = await resolveIntelligenceAirportDefaults(12);
+      setSupportedAirports(defaults.airports);
+      setAirport(defaults.defaultAirport ?? "");
+      setReadinessMessage(defaults.isReady ? null : defaults.reason ?? "Backend intelligence is not data-ready.");
+      setBootstrapComplete(true);
     };
     void bootstrap();
   }, []);
 
   useEffect(() => {
-    if (!airport) return;
+    if (!bootstrapComplete || !airport) return;
 
     const load = async () => {
       try {
@@ -63,7 +69,7 @@ export default function CompetitionIntelPage() {
       }
     };
     void load();
-  }, [airport]);
+  }, [airport, bootstrapComplete]);
 
   const why = useMemo(() => {
     if (!airportData?.metrics) return "No airport competition metrics for current filter.";
@@ -82,6 +88,34 @@ export default function CompetitionIntelPage() {
         <h2>Airport filter</h2>
         <input value={airport} onChange={(e) => setAirport(e.target.value.toUpperCase())} className="airport-input mt-3" maxLength={3} />
       </section>
+
+      {bootstrapComplete && supportedAirports.length > 0 ? (
+        <section className="panel">
+          <h2>Backend-supported airports</h2>
+          <div className="flex flex-wrap gap-2 mt-3">
+            {supportedAirports.map((code) => (
+              <button
+                key={code}
+                type="button"
+                className={`airport-button ${airport === code ? "selected" : ""}`}
+                onClick={() => setAirport(code)}
+              >
+                {code}
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {bootstrapComplete && !airport && readinessMessage ? (
+        <section className="panel">
+          <h2>Backend not data-ready</h2>
+          <p className="status">{readinessMessage}</p>
+          <p className="muted mt-2">
+            Competition intelligence now boots only from backend-supported airports. No supported airports means required marts are missing or empty.
+          </p>
+        </section>
+      ) : null}
 
       {error ? <p className="status error">Competition intelligence error: {error}</p> : null}
 

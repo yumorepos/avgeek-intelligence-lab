@@ -9,6 +9,28 @@ from app.services.analytics import AnalyticsService
 
 
 class StubIntelService:
+    def supported_airports(self):
+        return {
+            "airports": [{"iata": "JFK"}, {"iata": "LAX"}],
+            "readiness": {
+                "is_ready": True,
+                "reason": None,
+                "required_marts": {
+                    "airport_role_metrics": 2,
+                    "airport_competition_metrics": 2,
+                    "route_competition_metrics": 4,
+                },
+            },
+            "metadata": {
+                "data_source": "postgres",
+                "is_fallback": False,
+                "data_complete": True,
+                "note": None,
+                "last_refreshed_at": None,
+            },
+            "intelligence_meta": {"methodology_version": "v0_competitiveness", "coverage_summary": "stub"},
+        }
+
     def route_changes(self, **_kwargs):
         return {
             "filters": {"airport_iata": "JFK", "limit": 100},
@@ -259,6 +281,11 @@ def test_intelligence_endpoints_with_stubbed_service() -> None:
     assert timeline.status_code == 200
     assert timeline.json()["points"][1]["inferred_label"] == "competition increasing"
 
+    supported = client.get("/intelligence/airports/supported")
+    assert supported.status_code == 200
+    assert supported.json()["readiness"]["is_ready"] is True
+    assert supported.json()["airports"][0]["iata"] == "JFK"
+
 
 def _write_csv(path: Path, headers: list[str], rows: list[list[object]]) -> None:
     path.write_text("\n".join([",".join(headers)] + [",".join(str(v) for v in row) for row in rows]), encoding="utf-8")
@@ -356,6 +383,10 @@ def test_csv_intelligence_repository_contract(monkeypatch, tmp_path: Path) -> No
     timeline = service.route_insight_timeline("JFK", "LAX")
     assert timeline.points
 
+    supported = service.supported_airports()
+    assert supported.readiness.is_ready is True
+    assert "JFK" in [airport.iata for airport in supported.airports]
+
 
 def test_sparse_single_carrier_competition_case(monkeypatch, tmp_path: Path) -> None:
     from app.core.config import settings
@@ -443,3 +474,21 @@ def test_airport_role_returns_404_for_unknown_airport(monkeypatch, tmp_path: Pat
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Airport not found."
+
+
+def test_supported_airports_reports_not_ready_when_marts_missing(monkeypatch, tmp_path: Path) -> None:
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "database_url", None)
+    monkeypatch.setattr(settings, "use_csv_fallback", True)
+
+    marts = tmp_path / "marts"
+    marts.mkdir(parents=True, exist_ok=True)
+
+    service = AnalyticsService(repository=AnalyticsRepository())
+    service.repository.marts_dir = marts
+
+    supported = service.supported_airports()
+    assert supported.readiness.is_ready is False
+    assert supported.airports == []
+    assert supported.readiness.required_marts["airport_role_metrics"] == 0

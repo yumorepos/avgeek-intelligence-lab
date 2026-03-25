@@ -1,0 +1,9 @@
+route_key,year,month,reliability_score,fare_volatility,route_attractiveness_score,deal_signal,score_confidence
+JFK-LAX,2026,1,0.83,0.14,78,deal,high
+JFK-ORD,2026,1,0.86,0.11,80,strong_deal,high
+JFK-ATL,2026,1,0.79,0.13,70,neutral,medium
+LAX-ORD,2026,1,0.82,0.12,74,deal,high
+LAX-DFW,2026,1,0.80,0.12,72,neutral,medium
+ORD-ATL,2026,1,0.78,0.10,68,neutral,medium
+ATL-DFW,2026,1,0.81,0.13,73,deal,high
+DFW-JFK,2026,1,0.77,0.15,67,expensive,medium

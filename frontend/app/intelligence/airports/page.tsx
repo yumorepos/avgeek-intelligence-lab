@@ -5,24 +5,30 @@ import { useEffect, useMemo, useState } from "react";
 import { MetadataNotice } from "@/components/MetadataNotice";
 import { AirportPeersResponse, AirportRoleResponse, getAirportPeers, getAirportRole } from "@/lib/api";
 import { formatPercent } from "@/lib/format";
-import { resolveAirportDefaults } from "@/lib/airport-defaults";
+import { resolveIntelligenceAirportDefaults } from "@/lib/airport-defaults";
 
 export default function AirportRoleIntelPage() {
   const [iata, setIata] = useState("");
   const [role, setRole] = useState<AirportRoleResponse | null>(null);
   const [peers, setPeers] = useState<AirportPeersResponse | null>(null);
+  const [supportedAirports, setSupportedAirports] = useState<string[]>([]);
+  const [readinessMessage, setReadinessMessage] = useState<string | null>(null);
+  const [bootstrapComplete, setBootstrapComplete] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const bootstrap = async () => {
-      const defaults = await resolveAirportDefaults(5, { requireIntelligenceAirport: true });
-      setIata(defaults.defaultAirport);
+      const defaults = await resolveIntelligenceAirportDefaults(12);
+      setSupportedAirports(defaults.airports);
+      setIata(defaults.defaultAirport ?? "");
+      setReadinessMessage(defaults.isReady ? null : defaults.reason ?? "Backend intelligence is not data-ready.");
+      setBootstrapComplete(true);
     };
     void bootstrap();
   }, []);
 
   useEffect(() => {
-    if (!iata) return;
+    if (!bootstrapComplete || !iata) return;
 
     const load = async () => {
       try {
@@ -37,7 +43,7 @@ export default function AirportRoleIntelPage() {
       }
     };
     void load();
-  }, [iata]);
+  }, [bootstrapComplete, iata]);
 
   const why = useMemo(() => {
     if (!role?.metrics) return "No role metrics available for this airport in loaded data.";
@@ -56,6 +62,34 @@ export default function AirportRoleIntelPage() {
         <h2>Airport</h2>
         <input value={iata} onChange={(e) => setIata(e.target.value.toUpperCase())} className="airport-input mt-3" maxLength={3} />
       </section>
+
+      {bootstrapComplete && supportedAirports.length > 0 ? (
+        <section className="panel">
+          <h2>Backend-supported airports</h2>
+          <div className="flex flex-wrap gap-2 mt-3">
+            {supportedAirports.map((airport) => (
+              <button
+                key={airport}
+                type="button"
+                className={`airport-button ${iata === airport ? "selected" : ""}`}
+                onClick={() => setIata(airport)}
+              >
+                {airport}
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {bootstrapComplete && !iata && readinessMessage ? (
+        <section className="panel">
+          <h2>Backend not data-ready</h2>
+          <p className="status">{readinessMessage}</p>
+          <p className="muted mt-2">
+            This page now boots only from backend-supported airports. If no supported airports are returned, intelligence marts are not ready.
+          </p>
+        </section>
+      ) : null}
 
       {error ? <p className="status error">Airport role error: {error}</p> : null}
 

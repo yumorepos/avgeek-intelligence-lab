@@ -1,0 +1,4 @@
+route_key,origin_iata,destination_iata,year,month,change_type,previous_frequency,current_frequency,frequency_delta,dominant_carrier,significance,confidence
+JFK-LAX,JFK,LAX,2026,1,frequency_change,320,360,40,DL,moderate,high
+ATL-DFW,ATL,DFW,2026,1,resume,0,214,214,AA,high,high
+DFW-JFK,DFW,JFK,2026,1,launch,0,205,205,UA,high,medium

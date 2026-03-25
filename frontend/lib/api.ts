@@ -334,6 +334,20 @@ export type InsightQualityResponse = {
   data_coverage_stats: Record<string, number>;
 };
 
+export type IntelligenceSupportedAirportsResponse = {
+  airports: { iata: string }[];
+  readiness: {
+    is_ready: boolean;
+    reason: string | null;
+    required_marts: Record<string, number>;
+  };
+  metadata: DataProvenance;
+  intelligence_meta: {
+    methodology_version: string;
+    coverage_summary: string;
+  };
+};
+
 export type RouteInsightTimelineResponse = {
   route_key: string;
   points: {
@@ -581,6 +595,10 @@ export function getAirportInsights(iata: string): Promise<AirportInsightsRespons
 
 export function getInsightQuality(): Promise<InsightQualityResponse> {
   return fetchIntelligence("/meta/insight-quality");
+}
+
+export function getSupportedIntelligenceAirports(): Promise<IntelligenceSupportedAirportsResponse> {
+  return fetchIntelligence("/intelligence/airports/supported");
 }
 
 export function getRouteInsightTimeline(origin: string, destination: string, periods = 12): Promise<RouteInsightTimelineResponse> {

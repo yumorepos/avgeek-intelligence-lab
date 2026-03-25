@@ -9,6 +9,23 @@ class IntelligenceMeta(BaseModel):
     coverage_summary: str
 
 
+class IntelligenceSupportedAirport(BaseModel):
+    iata: str
+
+
+class IntelligenceReadiness(BaseModel):
+    is_ready: bool
+    reason: str | None = None
+    required_marts: dict[str, int]
+
+
+class IntelligenceSupportedAirportsResponse(BaseModel):
+    airports: list[IntelligenceSupportedAirport]
+    readiness: IntelligenceReadiness
+    metadata: DataProvenance
+    intelligence_meta: IntelligenceMeta
+
+
 class RouteChangeEvent(BaseModel):
     route_key: str
     origin_iata: str

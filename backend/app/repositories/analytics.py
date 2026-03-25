@@ -25,7 +25,8 @@ class AnalyticsRepository:
 
     def __init__(self) -> None:
         self.repo_root = Path(__file__).resolve().parents[3]
-        self.marts_dir = self.repo_root / "data" / "marts"
+        backend_scoped_marts = self.repo_root / "backend" / "data" / "marts"
+        self.marts_dir = backend_scoped_marts if backend_scoped_marts.exists() else self.repo_root / "data" / "marts"
 
     def _use_db(self) -> bool:
         return bool(settings.database_url)
@@ -425,6 +426,68 @@ class AnalyticsRepository:
 
         airport = self._airport_from_iata(normalized_iata)
         return {"airport": airport, "enplanement": None, "related_routes": explore}
+
+    def get_intelligence_supported_airports(self) -> dict:
+        self._guard_data_access()
+
+        if self._use_db():
+            role_iatas = {
+                row["iata"]
+                for row in self._db_rows("SELECT DISTINCT iata FROM airport_role_metrics")
+                if row.get("iata")
+            }
+            airport_comp_iatas = {
+                row["iata"]
+                for row in self._db_rows("SELECT DISTINCT iata FROM airport_competition_metrics")
+                if row.get("iata")
+            }
+            route_comp_rows = self._db_rows("SELECT origin_iata, destination_iata FROM route_competition_metrics")
+            route_comp_iatas: set[str] = set()
+            for row in route_comp_rows:
+                origin = self._normalize_iata(row.get("origin_iata"))
+                destination = self._normalize_iata(row.get("destination_iata"))
+                if origin:
+                    route_comp_iatas.add(origin)
+                if destination:
+                    route_comp_iatas.add(destination)
+
+            supported = sorted(role_iatas & airport_comp_iatas)
+            return {
+                "airports": supported,
+                "required_marts": {
+                    "airport_role_metrics": len(role_iatas),
+                    "airport_competition_metrics": len(airport_comp_iatas),
+                    "route_competition_metrics": len(route_comp_rows),
+                },
+                "route_comp_iatas": len(route_comp_iatas),
+            }
+
+        role_rows = self._read_csv("airport_role_metrics.csv")
+        airport_comp_rows = self._read_csv("airport_competition_metrics.csv")
+        route_comp_rows = self._read_csv("route_competition_metrics.csv")
+
+        role_iatas = {iata for iata in (self._normalize_iata(row.get("iata")) for row in role_rows) if iata}
+        airport_comp_iatas = {iata for iata in (self._normalize_iata(row.get("iata")) for row in airport_comp_rows) if iata}
+
+        route_comp_iatas: set[str] = set()
+        for row in route_comp_rows:
+            origin = self._normalize_iata(row.get("origin_iata"))
+            destination = self._normalize_iata(row.get("destination_iata"))
+            if origin:
+                route_comp_iatas.add(origin)
+            if destination:
+                route_comp_iatas.add(destination)
+
+        supported = sorted(role_iatas & airport_comp_iatas)
+        return {
+            "airports": supported,
+            "required_marts": {
+                "airport_role_metrics": len(role_rows),
+                "airport_competition_metrics": len(airport_comp_rows),
+                "route_competition_metrics": len(route_comp_rows),
+            },
+            "route_comp_iatas": len(route_comp_iatas),
+        }
 
 
     def get_route_changes(

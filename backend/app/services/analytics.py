@@ -15,6 +15,9 @@ from app.schemas.airport import (
 )
 from app.schemas.common import DataProvenance
 from app.schemas.intelligence import (
+    IntelligenceReadiness,
+    IntelligenceSupportedAirport,
+    IntelligenceSupportedAirportsResponse,
     AirportCompetitionMetrics,
     AirportCompetitionResponse,
     AirportInsight,
@@ -208,6 +211,38 @@ class AnalyticsService:
             intelligence_meta=IntelligenceMeta(
                 methodology_version="v0_competitiveness",
                 coverage_summary=coverage,
+            ),
+        )
+
+    def supported_airports(self) -> IntelligenceSupportedAirportsResponse:
+        try:
+            payload = self.repository.get_intelligence_supported_airports()
+        except DatabaseUnavailableError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+        required_marts = payload["required_marts"]
+        required_non_empty = (
+            required_marts.get("airport_role_metrics", 0) > 0
+            and required_marts.get("airport_competition_metrics", 0) > 0
+            and required_marts.get("route_competition_metrics", 0) > 0
+        )
+        ready = required_non_empty and len(payload["airports"]) > 0
+        reason = None
+        if not ready:
+            reason = (
+                "Backend intelligence marts are not data-ready. "
+                "Expected non-empty airport_role_metrics, airport_competition_metrics, and route_competition_metrics."
+            )
+
+        return IntelligenceSupportedAirportsResponse(
+            airports=[IntelligenceSupportedAirport(iata=iata) for iata in payload["airports"]],
+            readiness=IntelligenceReadiness(is_ready=ready, reason=reason, required_marts=required_marts),
+            metadata=self._metadata(),
+            intelligence_meta=IntelligenceMeta(
+                methodology_version="v0_competitiveness",
+                coverage_summary=(
+                    "Supported airports are computed from overlap of airport_role_metrics and airport_competition_metrics in loaded backend data."
+                ),
             ),
         )
 

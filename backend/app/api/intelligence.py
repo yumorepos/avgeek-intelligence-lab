@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Query
 
 from app.schemas.intelligence import (
+    IntelligenceSupportedAirportsResponse,
     AirportCompetitionResponse,
     AirportInsightsResponse,
     AirportPeersResponse,
@@ -14,6 +15,11 @@ from app.services.analytics import AnalyticsService
 
 router = APIRouter(prefix="/intelligence", tags=["intelligence"])
 service = AnalyticsService()
+
+
+@router.get("/airports/supported", response_model=IntelligenceSupportedAirportsResponse)
+def supported_airports() -> IntelligenceSupportedAirportsResponse:
+    return service.supported_airports()
 
 
 @router.get("/routes/changes", response_model=RouteChangesResponse)
