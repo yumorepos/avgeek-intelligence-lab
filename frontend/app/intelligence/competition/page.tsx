@@ -29,7 +29,7 @@ export default function CompetitionIntelPage() {
 
   useEffect(() => {
     const bootstrap = async () => {
-      const defaults = await resolveAirportDefaults();
+      const defaults = await resolveAirportDefaults(5, { requireIntelligenceAirport: true });
       setAirport(defaults.defaultAirport);
     };
     void bootstrap();

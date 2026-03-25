@@ -369,6 +369,14 @@ function withBackendHint(detail: string): string {
 }
 
 function withDemoHint(detail: string): string {
+  if (process.env.NEXT_PUBLIC_USE_BACKEND_PROXY === "true") {
+    const defaultBackend = getDefaultBackendHint({
+      nodeEnv: process.env.NODE_ENV,
+      useBackendProxy: process.env.NEXT_PUBLIC_USE_BACKEND_PROXY,
+    });
+    return `${detail} Verify the frontend API routes are reachable under ${DEMO_API_BASE_URL} and proxy to ${defaultBackend}.`;
+  }
+
   return `${detail} Verify the frontend API routes are reachable under ${DEMO_API_BASE_URL}.`;
 }
 
@@ -512,6 +520,19 @@ export function getRouteChanges(params: {
 
 export function getAirportRole(iata: string): Promise<AirportRoleResponse> {
   return fetchIntelligence(`/intelligence/airports/${encodeURIComponent(iata)}/role`);
+}
+
+export async function findAvailableAirportRole(candidates: string[]): Promise<string | null> {
+  for (const candidate of candidates) {
+    try {
+      await getAirportRole(candidate);
+      return candidate;
+    } catch {
+      // Try next candidate.
+    }
+  }
+
+  return null;
 }
 
 export function getAirportPeers(iata: string, limit = 5): Promise<AirportPeersResponse> {

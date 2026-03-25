@@ -10,7 +10,7 @@ const NAV_ITEMS = [
   { href: "/network", label: "Network (Demo)" },
   { href: "/seasonality", label: "Seasonality (Demo)" },
   { href: "/learn", label: "Methodology" },
-  { href: "/about", label: "Data Status" },
+  { href: "/data-status", label: "Data Status" },
 ];
 
 export function AppNav() {

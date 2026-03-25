@@ -14,8 +14,12 @@ const nextConfig = {
 
     return [
       {
-        source: "/api/:path*",
-        destination: `${backendUrl}/:path*`,
+        source: "/api/intelligence/:path*",
+        destination: `${backendUrl}/intelligence/:path*`,
+      },
+      {
+        source: "/api/meta/insight-quality",
+        destination: `${backendUrl}/meta/insight-quality`,
       },
     ];
   },

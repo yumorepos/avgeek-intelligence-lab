@@ -157,7 +157,7 @@ export default function HomePage() {
           </article>
         </div>
         <p className="muted mt-4">
-          Want the full trust surface? See <Link href="/about" className="text-orange-700 font-semibold">Data Status</Link> and <Link href="/learn" className="text-orange-700 font-semibold">Methodology</Link>.
+          Want the full trust surface? See <Link href="/data-status" className="text-orange-700 font-semibold">Data Status</Link> and <Link href="/learn" className="text-orange-700 font-semibold">Methodology</Link>.
         </p>
       </section>
 

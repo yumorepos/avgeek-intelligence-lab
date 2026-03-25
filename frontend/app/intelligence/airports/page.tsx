@@ -15,7 +15,7 @@ export default function AirportRoleIntelPage() {
 
   useEffect(() => {
     const bootstrap = async () => {
-      const defaults = await resolveAirportDefaults();
+      const defaults = await resolveAirportDefaults(5, { requireIntelligenceAirport: true });
       setIata(defaults.defaultAirport);
     };
     void bootstrap();
