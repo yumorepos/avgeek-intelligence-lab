@@ -2,10 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { findAirport, routesFrom } from "@/lib/demo-data";
 import { demoMetadata } from "@/lib/server-metadata";
 
+const BACKEND_URL = process.env.BACKEND_URL;
+
 export async function GET(_request: NextRequest, { params }: { params: { iata: string } }) {
   const iata = params.iata.toUpperCase();
-  const airport = findAirport(iata);
 
+  // Backend-configured mode: forward to real backend. No silent mock fallback.
+  if (BACKEND_URL) {
+    const upstream = `${BACKEND_URL}/airports/${encodeURIComponent(iata)}/context`;
+    const response = await fetch(upstream, { cache: "no-store" });
+    const body = await response.text();
+    return new NextResponse(body, {
+      status: response.status,
+      headers: { "content-type": response.headers.get("content-type") ?? "application/json" },
+    });
+  }
+
+  // Frontend-only mock mode.
+  const airport = findAirport(iata);
   if (!airport) {
     return NextResponse.json({ detail: "Airport not found in mock demo data." }, { status: 404 });
   }

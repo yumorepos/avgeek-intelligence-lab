@@ -2,10 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 import { routesFrom } from "@/lib/demo-data";
 import { demoMetadata } from "@/lib/server-metadata";
 
+const BACKEND_URL = process.env.BACKEND_URL;
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const origin = (searchParams.get("origin") || "").toUpperCase();
+  const rawOrigin = searchParams.get("origin") ?? "";
 
+  // Backend-configured mode: forward to real backend. No silent mock fallback.
+  if (BACKEND_URL) {
+    const upstream = `${BACKEND_URL}/routes/explore?origin=${encodeURIComponent(rawOrigin)}`;
+    const response = await fetch(upstream, { cache: "no-store" });
+    const body = await response.text();
+    return new NextResponse(body, {
+      status: response.status,
+      headers: { "content-type": response.headers.get("content-type") ?? "application/json" },
+    });
+  }
+
+  // Frontend-only mock mode.
+  const origin = rawOrigin.toUpperCase();
   const routes = routesFrom(origin).map((route) => ({
     destination: {
       iata: route.destination,

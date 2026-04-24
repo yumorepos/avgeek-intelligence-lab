@@ -12,6 +12,13 @@ const nextConfig = {
       return [];
     }
 
+    // Note: in Next.js 14 App Router, file-based route handlers at
+    // app/api/**/route.ts take precedence over afterFiles rewrites (verified
+    // empirically). Proxying for /api/intelligence/*, /api/airports/*, and
+    // /api/routes/* is performed by the handlers themselves when BACKEND_URL
+    // is set (see app/api/intelligence/**/route.ts, app/api/airports/**/route.ts,
+    // app/api/routes/explore/route.ts). The rewrites below cover endpoints
+    // that do not have a file-based handler.
     return [
       {
         source: "/api/intelligence/:path*",
