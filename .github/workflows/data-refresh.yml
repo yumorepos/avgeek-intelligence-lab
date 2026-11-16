@@ -1,15 +1,18 @@
-name: Data Refresh
+name: Data Refresh (manual only — prerequisite inputs)
 
+# Legacy archive-data pipeline; only run manually after provisioning
+# real source files and backend credentials in the runner environment.
+# This workflow does not download its required input datasets.
 on:
-  schedule:
-    # Run every Sunday at 2 AM UTC
-    - cron: '0 2 * * 0'
   workflow_dispatch:
     inputs:
       force_refresh:
         description: 'Force full data refresh'
         required: false
         default: 'false'
+
+permissions:
+  contents: read
 
 jobs:
   refresh-data:
@@ -91,16 +94,3 @@ jobs:
           name: data-refresh-report
           path: refresh-report.md
           retention-days: 30
-
-      - name: Notify on failure
-        if: failure()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: 'Data Refresh Failed',
-              body: `Data refresh workflow failed on ${new Date().toISOString()}\n\nCheck the workflow run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
-              labels: ['automation', 'bug']
-            })
