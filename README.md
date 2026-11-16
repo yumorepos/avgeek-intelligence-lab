@@ -63,6 +63,14 @@ Data-model foundation now includes:
 
 ---
 
+## Maintenance and data refresh status (November 2026)
+
+This repository is retained as an **experimental engineering reference**, not a maintained live aviation information service. The scheduled dataset refresh is **disabled** because previous automated runs failed and the workflow requires three BTS/FAA input paths and database configuration that are **not provisioned by a clean GitHub runner**. Historical failures have not been treated as a successful or current data refresh.
+
+The [Data Refresh workflow](.github/workflows/data-refresh.yml) is now manual-only. **Do not dispatch it** until the input datasets are explicitly staged and the required environment variables / credentials are verified. It does not fetch those datasets automatically. Its manual run may still fail with missing inputs; successful tests only validate code against fixtures, not live data freshness.
+
+A future revival requires an explicit source-ingestion design, supported dependency/runtime upgrades, environment setup, tested freshness contracts, and an owner-approved deployment. The three primary aviation analytics case studies are maintained separately in the [portfolio](https://yumorepos.github.io/).
+
 ## Important limitations
 
 - No real-time aviation feed in this repo.
